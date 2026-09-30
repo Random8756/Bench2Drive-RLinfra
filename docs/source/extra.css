@@ -1,0 +1,170 @@
+/* Small refinements on top of the MkDocs readthedocs theme. */
+
+.wy-nav-content {
+  max-width: 980px;
+}
+
+.rst-content table.docutils,
+.rst-content table {
+  width: 100%;
+}
+
+/* Keep Markdown tables within the content column while allowing long paths to wrap. */
+.rst-content .wy-table-responsive table.docutils {
+  display: table;
+  width: 100%;
+}
+
+.rst-content .wy-table-responsive table.docutils th,
+.rst-content .wy-table-responsive table.docutils td {
+  vertical-align: top;
+  white-space: normal;
+}
+
+.rst-content .wy-table-responsive table.docutils code {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* Give the architecture-map paths a little more room on the home page. */
+.rst-content #system-components + p + table,
+.rst-content #system-components + p + .wy-table-responsive table {
+  table-layout: fixed;
+}
+
+.rst-content #system-components + p + table th:nth-child(1),
+.rst-content #system-components + p + .wy-table-responsive th:nth-child(1) {
+  width: 13%;
+}
+
+.rst-content #system-components + p + table th:nth-child(2),
+.rst-content #system-components + p + .wy-table-responsive th:nth-child(2) {
+  width: 26%;
+}
+
+.rst-content #system-components + p + table th:nth-child(3),
+.rst-content #system-components + p + .wy-table-responsive th:nth-child(3) {
+  width: 23%;
+}
+
+.rst-content #system-components + p + table th:nth-child(4),
+.rst-content #system-components + p + .wy-table-responsive th:nth-child(4) {
+  width: 38%;
+}
+
+/* Keep layer names on one line in the Architecture Overview table. */
+.rst-content #architecture-overview + p + p + table,
+.rst-content #architecture-overview + p + p + .wy-table-responsive table {
+  table-layout: fixed;
+}
+
+.rst-content #architecture-overview + p + p + table th:nth-child(1),
+.rst-content #architecture-overview + p + p + .wy-table-responsive th:nth-child(1) {
+  width: 20%;
+}
+
+.rst-content #architecture-overview + p + p + table th:nth-child(2),
+.rst-content #architecture-overview + p + p + .wy-table-responsive th:nth-child(2) {
+  width: 57%;
+}
+
+.rst-content #architecture-overview + p + p + table th:nth-child(3),
+.rst-content #architecture-overview + p + p + .wy-table-responsive th:nth-child(3) {
+  width: 23%;
+}
+
+/* Leave enough room for the longest L1 component name. */
+.rst-content #scenario-layer + p + #components + table,
+.rst-content #scenario-layer + p + #components + .wy-table-responsive table {
+  table-layout: fixed;
+}
+
+.rst-content #scenario-layer + p + #components + table th:first-child,
+.rst-content #scenario-layer + p + #components + .wy-table-responsive th:first-child {
+  width: 24%;
+}
+
+/* Accommodate longer L2 component names on the Environment Layer page. */
+.rst-content #environment-layer ~ #components + table,
+.rst-content #environment-layer ~ #components + .wy-table-responsive table {
+  table-layout: fixed;
+}
+
+.rst-content #environment-layer ~ #components + table th:first-child,
+.rst-content #environment-layer ~ #components + .wy-table-responsive th:first-child {
+  width: 27%;
+}
+
+/* Keep L3 server and connection component names on one line. */
+.rst-content #simulation-layer ~ #components + table,
+.rst-content #simulation-layer ~ #components + .wy-table-responsive table {
+  table-layout: fixed;
+}
+
+.rst-content #simulation-layer ~ #components + table th:first-child,
+.rst-content #simulation-layer ~ #components + .wy-table-responsive th:first-child {
+  width: 24%;
+}
+
+/* Keep long L4 policy and feature-extractor names on one line. */
+.rst-content #algorithm-layer ~ #components + table,
+.rst-content #algorithm-layer ~ #components + .wy-table-responsive table {
+  table-layout: fixed;
+}
+
+.rst-content #algorithm-layer ~ #components + table th:first-child,
+.rst-content #algorithm-layer ~ #components + .wy-table-responsive th:first-child {
+  width: 28%;
+}
+
+/* Accommodate long L5 runtime and statistics component names. */
+.rst-content #evaluation-and-diagnostics ~ #components + table,
+.rst-content #evaluation-and-diagnostics ~ #components + .wy-table-responsive table {
+  table-layout: fixed;
+}
+
+.rst-content #evaluation-and-diagnostics ~ #components + table th:first-child,
+.rst-content #evaluation-and-diagnostics ~ #components + .wy-table-responsive th:first-child {
+  width: 27%;
+}
+
+/* Keep configuration section names, including env.model_integrations, intact. */
+.rst-content #top-level-sections + table,
+.rst-content #top-level-sections + .wy-table-responsive table {
+  table-layout: fixed;
+}
+
+.rst-content #top-level-sections + table th:first-child,
+.rst-content #top-level-sections + .wy-table-responsive th:first-child {
+  width: 24%;
+}
+
+.rst-content code {
+  font-size: 90%;
+}
+
+.rst-content pre code {
+  font-size: 88%;
+}
+
+.rst-content .admonition-title {
+  font-weight: 700;
+}
+
+.rst-content blockquote {
+  border-left: 4px solid #d9e2ec;
+  color: #4f5b66;
+  margin-left: 0;
+  padding-left: 1rem;
+}
+
+/* Documentation figures share one quiet frame throughout the content area. */
+.rst-content img {
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(44, 62, 80, 0.06);
+  padding: 4px;
+}

@@ -1,0 +1,369 @@
+algorithm:
+  name: td3
+  total_timesteps: 10000000
+  buffer_size: 800000
+  learning_starts: 40000
+  batch_size: 512
+  gamma: 0.99
+  tau: 0.005
+  learning_rate: 2.0e-4
+  learning_rate_final: 5.0e-5
+  train_freq: 256
+  gradient_steps: 16
+  policy_delay: 2
+  target_policy_noise: 0.2
+  target_noise_clip: 0.5
+  exploration_noise: 0.1
+  exploration_noise_decay_steps: 0
+  exploration_noise_final_scale: 1.0
+  bc_enabled: false
+  bc_lambda_initial: 2.0
+  bc_lambda_decay_steps: 1000000
+  bc_lambda_final: 0.0
+  bc_prior_action: [0.8, 0.0]
+  bc_source: lqr
+  warmup_source: lqr
+  exploration_mode: epsilon_greedy
+  exploit_prob_initial: 0.5
+  exploit_prob_final: 0.5
+  exploit_prob_decay_steps: 70000000
+  explore_actions:
+    - [0.1, 0.0]
+    - [1.0, 0.0]
+    - [-1.0, 0.0]
+    - [0.7, -0.5]
+    - [0.7, 0.5]
+    - [0.7, -1.0]
+    - [0.7, 1.0]
+  explore_action_repeat: 1
+  per_alpha: 0.6
+  per_beta: 0.4
+  per_beta_annealing_steps: 3500000
+  per_min_priority: 0.000001
+
+  static_buffer:
+    enabled: true
+    capacity: 15000
+    completion_threshold: 50.0
+    strict_success_threshold: 99.9
+    require_clean_for_high_completion: true
+    simple_scenarios:
+      - "VanillaSignalized"
+    static_ratio_initial: 0.0
+    static_ratio_final: 0.3
+    static_ratio_anneal_steps: 5000000
+    scenarios: []
+
+policy:
+  feature_extractor:
+    type: combined
+  features_dim: 256
+  net_arch:
+    pi: [256, 128]
+    qf: [256, 128]
+  activation_fn: relu
+  distributional:
+    enabled: true
+    num_bins: 301
+    use_symlog: true
+    v_max: 900.0
+    v_min: -500.0
+  moe:
+    aux_loss_weight: 0.01
+    actor:
+      enabled: true
+      num_experts: 4
+      top_k: 2
+      noisy_gating: true
+    critic:
+      enabled: false
+      num_experts: 4
+      top_k: 2
+      noisy_gating: true
+
+training:
+  seed: 42
+  device: cuda
+  log_dir: ./logs/td3_bev_mask
+  save_freq: 200000
+  verbose: 1
+  log_interval: 4
+  adapter:
+    mode: standard
+    min_ready: 4
+    timeout: 120.0
+  visualization:
+    enabled: true
+    save_interval: 10
+    fps: 10
+    lazy_capture: true
+    overlay_info: true
+    max_videos: 500
+
+env:
+  environment:
+    debug_mode: false
+    result_dir: ./results
+    record: false
+    blocked_time_out_limit: 180
+    max_episode_steps: 768
+    worker_recycle_interval_episodes: 40
+    worker_recycle_jitter_episodes: 10
+    truncation:
+      penalty: -200.0
+    deviation_limit: 30
+    infos:
+      env_id: 0
+      current_step: 0
+      crash: false
+      crash_message: ''
+      entry_status: ''
+      route_id: ''
+      route_num: 0
+      log: false
+      blocked_by_obstacles: false
+      town: ''
+    terminate_events:
+      - COLLISION_PEDESTRIAN
+      - COLLISION_VEHICLE
+      - COLLISION_STATIC
+      - TRAFFIC_LIGHT_INFRACTION
+      - STOP_INFRACTION
+      - VEHICLE_BLOCKED
+      - ROUTE_DEVIATION
+      - USELESS_MOVE_TIMEOUT
+      - NOT_IN_CARLANE
+      - SECOND_RED_SAME_LIGHT
+      - SUCCESS
+    termination:
+      success_percent_threshold: 99.9
+      off_road_threshold: 1.5
+      blocked_time_out_limit: 180.0
+      second_red_light_distance_threshold: 20.0
+      second_red_light_clear_distance: 30.0
+      second_red_stop_speed_threshold: 0.2
+  carla:
+    load_world_timeout: 600
+    worker_ready_timeout: 600
+    disable_watchdog: true
+    num_envs: 24
+    host:
+      - 127.0.1.10
+      - 127.0.1.11
+      - 127.0.1.12
+      - 127.0.1.13
+      - 127.0.1.14
+      - 127.0.1.15
+      - 127.0.1.16
+      - 127.0.1.17
+      - 127.0.1.18
+      - 127.0.1.19
+      - 127.0.1.20
+      - 127.0.1.21
+      - 127.0.1.22
+      - 127.0.1.23
+      - 127.0.1.24
+      - 127.0.1.25
+      - 127.0.1.26
+      - 127.0.1.27
+      - 127.0.1.28
+      - 127.0.1.29
+      - 127.0.1.30
+      - 127.0.1.31
+      - 127.0.1.32
+      - 127.0.1.33
+    port:
+      - 4265
+      - 4115
+      - 4125
+      - 4135
+      - 4145
+      - 4155
+      - 4165
+      - 4175
+      - 4185
+      - 4195
+      - 4205
+      - 4215
+      - 4225
+      - 4235
+      - 4245
+      - 4255
+      - 4275
+      - 4285
+      - 4295
+      - 4305
+      - 4315
+      - 4325
+      - 4335
+      - 4345
+    traffic_manager_port:
+      - 8465
+      - 8315
+      - 8325
+      - 8335
+      - 8345
+      - 8355
+      - 8365
+      - 8375
+      - 8385
+      - 8395
+      - 8405
+      - 8415
+      - 8425
+      - 8435
+      - 8445
+      - 8455
+      - 8475
+      - 8485
+      - 8495
+      - 8505
+      - 8515
+      - 8525
+      - 8535
+      - 8545
+    traffic_manager_seed:
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+    gpu_id:
+      - 6
+      - 7
+      - 6
+      - 7
+      - 6
+      - 7
+      - 6
+      - 7
+      - 6
+      - 7
+      - 6
+      - 7
+      - 6
+      - 7
+      - 6
+      - 7
+      - 6
+      - 7
+      - 6
+      - 7
+      - 6
+      - 7
+      - 6
+      - 7
+    frequency_hz: 10
+    timeout: 120
+    connection_timeout: 120
+    server_wait_timeout: 120
+    retry_interval: 2
+    max_retries: 5
+    quality_level: Low
+    render_offscreen: true
+    no_sound: true
+    null_rhi: true
+    no_steam: false
+    opengl: false
+    vulkan: false
+    extra_args: "-RPCThreads=2 -StreamingThreads=2 -SecondaryThreads=2 -nothreading"
+
+  routes:
+    route_files:
+      - resources/routes/train_routes_demo.xml
+    sample_mode: adaptive
+    adaptive:
+      window_size: 10
+      success_threshold: 100.0
+      low_success_rate: 0.5
+      high_success_rate: 0.8
+      low_success_weight: 2.0
+      high_success_weight: 0.75
+      warmup_min_samples: 8
+      log_interval_updates: 100
+      hard_scenarios:
+        - AccidentTwoWays
+        - ConstructionObstacleTwoWays
+        - CrossingBicycleFlow
+        - HazardAtSideLaneTwoWays
+        - OppositeVehicleTakingPriority
+        - VehicleTurningRoute
+        - YieldToEmergencyVehicle
+        - VehicleTurningRoutePedestrian
+      hard_scenario_max_gap_samples: 50
+    town_partition:
+      heavy_towns: []
+      heavy_ratio: 0
+  termination:
+    type: td3
+  reward:
+    type: td3
+  action_space:
+    type: continuous_accelerate_steering_rate
+    action_repeat: 1
+    action_dim: 2
+    continuous_actions_list:
+      - [-1.0, 1.0]
+      - [-1.0, 1.0]
+
+  observation_space:
+    vector:
+      enable: true
+      type: bev_mask
+      map_dir: resources/maps
+      mask_width: 64
+      pixels_per_meter: 2
+      ego_to_bottom: 32
+      lane_style: unified
+      elements:
+        ego_vehicle:
+          use_history: false
+        navigation:
+          use_history: false
+        vehicles:
+          use_history: true
+        emergency_vehicles:
+          use_history: true
+        pedestrians:
+          use_history: true
+        red_light:
+          use_history: false
+        green_light:
+          use_history: false
+        yellow_light:
+          use_history: false
+        obstacles:
+          use_history: true
+        lanes:
+          use_history: false
+        stop_signs:
+          use_history: false
+      history_index: [-16, -11, -6, -1]
+    scalars:
+      items:
+        - type: speed
+          use_history: true
+        - type: throttle
+          use_history: true
+        - type: brake
+          use_history: true
+      history_index: [-16, -11, -6, -1]

@@ -1,0 +1,38 @@
+gnss:
+  enable: true
+  output_key: gnss
+  emit_output: false
+  frame_timeout: 300.0
+  sensor:
+    type: sensor.other.gnss
+    id: GPS
+    x: -1.4
+    y: 0.0
+    z: 0.0
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0
+
+imu:
+  enable: true
+  output_key: imu
+  emit_output: false
+  frame_timeout: 300.0
+  sensor:
+    type: sensor.other.imu
+    id: IMU
+    x: -1.4
+    y: 0.0
+    z: 0.0
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0
+
+speedometer:
+  enable: true
+  output_key: speedometer
+  emit_output: false
+  sensor:
+    type: sensor.speedometer
+    id: SPEED
+    reading_frequency: 20

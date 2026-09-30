@@ -1,0 +1,330 @@
+# MindDrive finetuning example; replace policy paths and machine-specific CARLA values.
+
+algorithm:
+  name: ppo
+  batch_size: 64
+  n_epochs: 1
+  gamma: 0.99
+  gae_lambda: 1.0
+  clip_range: 0.1
+  normalize_advantage: true
+  ent_coef: 0.0
+  vf_coef: 0.15
+  max_grad_norm: 0.5
+  learning_rate: 1.0e-6
+  target_kl: 0.005
+
+rl_finetune:
+  seed: 3407
+  device: cuda:0
+  log_dir: ./logs/minddrive_rl_finetune
+  tensorboard:
+    enable: true
+    window_size: 100
+  verbose: 1
+  execution_mode: process
+  num_collectors: 16
+  collector_devices:
+    - cuda:0
+    - cuda:1
+    - cuda:2
+    - cuda:3
+    - cuda:4
+    - cuda:5
+    - cuda:6
+    - cuda:7
+    - cuda:0
+    - cuda:1
+    - cuda:2
+    - cuda:3
+    - cuda:4
+    - cuda:5
+    - cuda:6
+    - cuda:7
+  max_updates: 100
+  rollouts_per_update: 32
+  collect_timeout: 18000
+  control_poll_interval: 1.0
+  shutdown_timeout: 120.0
+  checkpoint_interval: 1
+  max_policy_lag: 2
+  stale_rollout_action: drop
+  cleanup_stale_rollouts: true
+  cleanup_consumed_rollouts: true
+  keep_last_n_update_rollouts: 0
+  update_sample_filter:
+    success_terminal_window_steps: 0
+    failure_terminal_window_steps: 200
+  policy_sync:
+    filename: policy_latest.pt
+  sim_actor:
+    auto_reset: true
+    manage_servers: true
+    use_rgb_shm: true
+    rgb_num_slots: 2
+    server_wait_timeout: 300.0
+    event_timeout: 300.0
+    actor_stop_timeout: 5.0
+    start_method: spawn
+
+policy_adapter:
+  type: minddrive
+  checkpoint: /abs/path/to/minddrive_rltrain.pth
+  config:
+    minddrive_root: /abs/path/to/MindDrive
+    minddrive_config: /abs/path/to/MindDrive/adzoo/minddrive/configs/minddrive_rl_ppo_train.py
+    precision: bf16
+    reset_value_head: false
+    # collection_action_mode: argmax
+    collection_action_mode: sample
+    pid_controller: eval_de
+    trainable:
+      - decision_expert
+      - value_net_pro
+    ppo:
+      kl_coef: 0.5
+      use_kl: true
+
+env:
+  model_integrations:
+    minddrive_route:
+      enable: true
+      downsample_factor: 50.0
+  environment:
+    debug_mode: false
+    record: false
+    blocked_time_out_limit: 180
+    max_episode_steps: 2000
+    worker_recycle_interval_episodes: 40
+    worker_recycle_jitter_episodes: 10
+    deviation_limit: 30
+    terminate_events:
+      - COLLISION_PEDESTRIAN
+      - COLLISION_VEHICLE
+      - COLLISION_STATIC
+      - TRAFFIC_LIGHT_INFRACTION
+      - STOP_INFRACTION
+      - VEHICLE_BLOCKED
+      - ROUTE_DEVIATION
+    termination:
+      success_percent_threshold: 99.9
+      off_road_threshold: 1.5
+      blocked_time_out_limit: 180.0
+      second_red_light_distance_threshold: 20.0
+      second_red_light_clear_distance: 30.0
+      second_red_stop_speed_threshold: 0.2
+  carla:
+    load_world_timeout: 300
+    worker_ready_timeout: 1800
+    disable_watchdog: true
+    # gpu_id is passed as -graphicsadapter=N to CarlaUE4.
+    num_envs: 16
+    host:
+      - 127.0.0.135
+      - 127.0.0.136
+      - 127.0.0.137
+      - 127.0.0.138
+      - 127.0.0.139
+      - 127.0.0.140
+      - 127.0.0.141
+      - 127.0.0.142
+      - 127.0.0.143
+      - 127.0.0.144
+      - 127.0.0.145
+      - 127.0.0.146
+      - 127.0.0.147
+      - 127.0.0.148
+      - 127.0.0.149
+      - 127.0.0.150
+    port:
+      - 2026
+      - 2036
+      - 2046
+      - 2056
+      - 2066
+      - 2076
+      - 2086
+      - 2096
+      - 2106
+      - 2116
+      - 2126
+      - 2136
+      - 2146
+      - 2156
+      - 2166
+      - 2176
+    traffic_manager_port:
+      - 8202
+      - 8302
+      - 8402
+      - 8502
+      - 8602
+      - 8702
+      - 8802
+      - 8902
+      - 9002
+      - 9102
+      - 9202
+      - 9302
+      - 9402
+      - 9502
+      - 9602
+      - 9702
+    traffic_manager_seed:
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+    gpu_id:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+    frequency_hz: 20
+    server_fps: 20
+    timeout: 300
+    connection_timeout: 300
+    server_wait_timeout: 300
+    retry_interval: 2
+    max_retries: 5
+    quality_level: Default
+    render_offscreen: true
+    no_rendering_mode: false
+    no_sound: true
+    null_rhi: false
+    no_steam: false
+    opengl: false
+    vulkan: false
+    extra_args: ''
+  routes:
+    route_files:
+      - resources/routes/finetune_routes_demo.xml
+    sample_mode: random
+    route_max_length_m: 150.0
+  termination:
+    type: ppo
+  reward:
+    type: minddrive_sparse
+  action_space:
+    type: continuous_throttle_steer_brake
+    action_repeat: 1
+    action_dim: 3
+    continuous_actions_list:
+      - [0.0, 0.75]
+      - [-1.0, 1.0]
+      - [0.0, 1.0]
+
+  observation_space:
+    other_sensor_presets:
+      - minddrive
+    vector:
+      enable: false
+    rgb:
+      enable: true
+      output_key: rgb
+      jpeg_quality: 20
+      frame_timeout: 300.0
+      frame_history_size: 2
+      warmup_ticks: 10
+      tick_timeout: 60.0
+      camera_order:
+        - CAM_FRONT
+        - CAM_FRONT_LEFT
+        - CAM_FRONT_RIGHT
+        - CAM_BACK
+        - CAM_BACK_LEFT
+        - CAM_BACK_RIGHT
+      sensors:
+        - type: sensor.camera.rgb
+          x: 0.80
+          y: 0.0
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: 0.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_FRONT
+        - type: sensor.camera.rgb
+          x: 0.27
+          y: -0.55
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: -55.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_FRONT_LEFT
+        - type: sensor.camera.rgb
+          x: 0.27
+          y: 0.55
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: 55.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_FRONT_RIGHT
+        - type: sensor.camera.rgb
+          x: -2.0
+          y: 0.0
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: 180.0
+          width: 1600
+          height: 900
+          fov: 110
+          id: CAM_BACK
+        - type: sensor.camera.rgb
+          x: -0.32
+          y: -0.55
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: -110.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_BACK_LEFT
+        - type: sensor.camera.rgb
+          x: -0.32
+          y: 0.55
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: 110.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_BACK_RIGHT
+    minddrive_state:
+      enable: true
+      output_key: minddrive_state

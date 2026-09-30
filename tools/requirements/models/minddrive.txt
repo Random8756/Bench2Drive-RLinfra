@@ -1,0 +1,3 @@
+# MindDrive dependencies are supplied by the external MindDrive repository.
+# See docs/source/rl_finetune_minddrive.md for installation and compatibility notes.
+# No additional generic wheel is pinned here.

@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Closed-loop end-to-end reinforcement learning finetuning workflow</title>
+  <desc id="desc">CARLA SimActor processes exchange observations and environment actions with parallel collectors. Collectors use local PolicyAdapter copies and write completed RolloutPack episodes. The coordinator selects rollout samples for a single-GPU or multi-GPU DDP PPO learner. Trainable weights return to collectors through the WeightStore at episode boundaries. PolicyAdapter supports full-model, module-level, or LoRA training with meta-action, trajectory, or direct-control interfaces.</desc>
+
+  <defs>
+    <filter id="shadow" x="-12%" y="-12%" width="124%" height="132%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow-blue" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 9 4.5 L 0 9 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-violet" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 9 4.5 L 0 9 Z" fill="#7c3aed"/>
+    </marker>
+    <marker id="arrow-slate" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 9 4.5 L 0 9 Z" fill="#64748b"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .plane { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; filter: url(#shadow); }
+      .card-blue { fill: #eff6ff; stroke: #60a5fa; stroke-width: 1.5; }
+      .card-green { fill: #ecfdf5; stroke: #34d399; stroke-width: 1.5; }
+      .card-orange { fill: #fff7ed; stroke: #fb923c; stroke-width: 1.5; }
+      .card-violet { fill: #f5f3ff; stroke: #a78bfa; stroke-width: 1.5; }
+      .card-amber { fill: #fffbeb; stroke: #fbbf24; stroke-width: 1.5; }
+      .card-slate { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.25; }
+      .mode-panel { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; filter: url(#shadow); }
+      .title { font: 700 25px "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 14px "Segoe UI", Arial, sans-serif; fill: #475569; }
+      .eyebrow { font: 700 10.5px "Segoe UI", Arial, sans-serif; letter-spacing: 1.25px; fill: #64748b; }
+      .plane-title { font: 700 17px "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .card-title { font: 700 16px "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .text { font: 400 14px "Segoe UI", Arial, sans-serif; fill: #334155; }
+      .small { font: 400 12.7px "Segoe UI", Arial, sans-serif; fill: #475569; }
+      .code { font: 600 12.5px Consolas, "SFMono-Regular", monospace; fill: #334155; }
+      .pill-label { font: 600 12.2px "Segoe UI", Arial, sans-serif; fill: #166534; }
+      .flow-label-blue { font: 600 11.5px "Segoe UI", Arial, sans-serif; fill: #1d4ed8; }
+      .flow-label-violet { font: 600 11.5px "Segoe UI", Arial, sans-serif; fill: #6d28d9; }
+      .pill-scope { fill: #eef2ff; stroke: #818cf8; stroke-width: 1; }
+      .pill-action { fill: #ecfeff; stroke: #22d3ee; stroke-width: 1; }
+      .pill-text-scope { font: 700 12.5px "Segoe UI", Arial, sans-serif; fill: #4338ca; }
+      .pill-text-action { font: 700 12.5px "Segoe UI", Arial, sans-serif; fill: #0e7490; }
+      .operator-text { font: 700 21px "Segoe UI", Arial, sans-serif; fill: #334155; }
+      .rule { stroke: #e2e8f0; stroke-width: 1.2; }
+      .flow-blue { fill: none; stroke: #2563eb; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow-blue); }
+      .flow-violet { fill: none; stroke: #7c3aed; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 7 6; marker-end: url(#arrow-violet); }
+      .flow-slate { fill: none; stroke: #64748b; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow-slate); }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="760"/>
+
+  <text x="40" y="40" class="title">Closed-loop end-to-end RL finetuning</text>
+  <text x="40" y="66" class="subtitle">Parallel collection, file-backed rollout exchange, and local or Slurm-managed execution</text>
+  <rect x="1000" y="26" width="160" height="32" rx="16" fill="#e0e7ff" stroke="#a5b4fc"/>
+  <text x="1080" y="42" text-anchor="middle" dominant-baseline="middle" class="pill-text-scope">LOCAL / SLURM</text>
+
+  <!-- Three runtime planes -->
+  <rect x="40" y="94" width="330" height="476" rx="17" class="plane"/>
+  <rect x="435" y="94" width="330" height="476" rx="17" class="plane"/>
+  <rect x="830" y="94" width="330" height="476" rx="17" class="plane"/>
+
+  <text x="65" y="124" class="eyebrow">COLLECTION PLANE</text>
+  <text x="65" y="151" class="plane-title">Parallel closed-loop rollout</text>
+  <path d="M 65 165 H 345" class="rule"/>
+
+  <text x="460" y="124" class="eyebrow">RUN DIRECTORY</text>
+  <text x="460" y="151" class="plane-title">Data exchange &amp; synchronization</text>
+  <path d="M 460 165 H 740" class="rule"/>
+
+  <text x="855" y="124" class="eyebrow">LEARNING PLANE · LOCAL / SLURM</text>
+  <text x="855" y="151" class="plane-title">Selection, PPO update &amp; publish</text>
+  <path d="M 855 165 H 1135" class="rule"/>
+
+  <!-- Collection -->
+  <rect x="65" y="184" width="280" height="92" rx="11" class="card-orange"/>
+  <text x="87" y="212" class="card-title">[CARLA + SimActor] × N</text>
+  <text x="87" y="237" class="text">Route execution, wrappers and rewards</text>
+  <text x="87" y="260" class="small">Server lifecycle · crash recovery</text>
+
+  <rect x="65" y="326" width="280" height="170" rx="11" class="card-green"/>
+  <text x="82" y="354" class="card-title">Collectors × N</text>
+  <text x="82" y="379" class="text">Local PolicyAdapter inference</text>
+  <rect x="82" y="397" width="86" height="28" rx="7" fill="#ffffff" stroke="#86efac"/>
+  <text x="125" y="411" text-anchor="middle" dominant-baseline="middle" class="pill-label">obs → policy</text>
+  <rect x="178" y="397" width="145" height="28" rx="7" fill="#ffffff" stroke="#86efac"/>
+  <text x="250.5" y="411" text-anchor="middle" dominant-baseline="middle" class="pill-label">action → CARLA control</text>
+  <text x="82" y="453" class="small">Write one RolloutPack per completed episode</text>
+  <text x="82" y="477" class="small">Pull latest weights at episode boundaries</text>
+
+  <path d="M 165 276 V 316" class="flow-slate"/>
+  <text x="80" y="301" class="small">observations</text>
+  <path d="M 250 326 V 286" class="flow-slate"/>
+  <text x="266" y="301" class="small">control</text>
+
+  <rect x="65" y="518" width="280" height="30" rx="15" class="card-slate"/>
+  <text x="205" y="533" text-anchor="middle" dominant-baseline="middle" class="small">local processes / repeated per Slurm node</text>
+
+  <!-- Run directory -->
+  <rect x="460" y="184" width="280" height="138" rx="11" class="card-blue"/>
+  <text x="482" y="212" class="card-title">RolloutPack store</text>
+  <text x="482" y="239" class="code">episode_*.rollout · manifest.jsonl</text>
+  <text x="482" y="265" class="text">ready → selected → consumed</text>
+  <rect x="482" y="282" width="236" height="27" rx="7" fill="#ffffff" stroke="#93c5fd"/>
+  <text x="600" y="295.5" text-anchor="middle" dominant-baseline="middle" class="code">UpdateSamplePlan · sample index</text>
+
+  <rect x="460" y="366" width="280" height="100" rx="11" class="card-violet"/>
+  <text x="482" y="394" class="card-title">WeightStore</text>
+  <text x="482" y="421" class="code">policy_latest.pt</text>
+  <text x="482" y="447" class="small">Trainable-only state · policy version</text>
+
+  <rect x="460" y="500" width="280" height="48" rx="10" class="card-slate"/>
+  <text x="482" y="520" class="code">checkpoints · control · heartbeats</text>
+  <text x="482" y="539" class="small">local disk or shared POSIX run_dir</text>
+
+  <!-- Learning -->
+  <rect x="855" y="184" width="280" height="112" rx="11" class="card-violet"/>
+  <text x="877" y="212" class="card-title">Coordinator · learner rank 0</text>
+  <text x="877" y="238" class="text">Select rollouts · build sample plan</text>
+  <text x="877" y="262" class="small">Checkpoint · cleanup · publish weights</text>
+  <text x="877" y="282" class="small">Monitor heartbeats and policy lag</text>
+
+  <rect x="855" y="346" width="280" height="156" rx="11" class="card-amber"/>
+  <text x="877" y="374" class="card-title">PPO learner</text>
+  <text x="877" y="400" class="text">Single GPU or multi-GPU DDP</text>
+  <rect x="877" y="418" width="236" height="30" rx="7" fill="#ffffff" stroke="#fcd34d"/>
+  <text x="995" y="433" text-anchor="middle" dominant-baseline="middle" class="code">LearnerSpec.module + optimizer</text>
+  <text x="877" y="474" class="small">PPO + adapter-specific auxiliary losses</text>
+
+  <rect x="855" y="520" width="280" height="28" rx="14" class="card-slate"/>
+  <text x="995" y="534" text-anchor="middle" dominant-baseline="middle" class="small">updated trainable state · next policy version</text>
+
+  <!-- Closed loop -->
+  <path d="M 345 376 H 390 Q 410 376 410 356 V 252 Q 410 252 425 252 H 450" class="flow-blue"/>
+  <text x="402" y="239" text-anchor="middle" class="flow-label-blue">rollouts</text>
+
+  <path d="M 740 252 H 845" class="flow-blue"/>
+  <text x="792" y="238" text-anchor="middle" class="flow-label-blue">sample plan</text>
+
+  <path d="M 995 296 V 336" class="flow-slate"/>
+  <text x="1008" y="320" class="small">update</text>
+
+  <path d="M 855 424 H 750" class="flow-violet"/>
+  <text x="802" y="410" text-anchor="middle" class="flow-label-violet">trainable state</text>
+
+  <path d="M 460 416 H 405 Q 390 416 390 431 V 466 Q 390 477 355 477" class="flow-violet"/>
+  <text x="401" y="405" text-anchor="middle" class="flow-label-violet">weights</text>
+
+  <!-- Composable finetune modes -->
+  <rect x="40" y="600" width="1120" height="124" rx="17" class="mode-panel"/>
+  <text x="65" y="628" class="eyebrow">POLICYADAPTER DEFINES TWO COMPOSABLE AXES</text>
+  <text x="65" y="663" class="plane-title">Trainable scope</text>
+
+  <rect x="200" y="640" width="106" height="36" rx="18" class="pill-scope"/>
+  <text x="253" y="658" text-anchor="middle" dominant-baseline="middle" class="pill-text-scope">Full-model</text>
+  <rect x="316" y="640" width="128" height="36" rx="18" class="pill-scope"/>
+  <text x="380" y="658" text-anchor="middle" dominant-baseline="middle" class="pill-text-scope">Module-level</text>
+  <rect x="454" y="640" width="78" height="36" rx="18" class="pill-scope"/>
+  <text x="493" y="658" text-anchor="middle" dominant-baseline="middle" class="pill-text-scope">LoRA</text>
+
+    <circle cx="565" cy="658" r="17" fill="none" stroke="#cbd5e1" stroke-width="1.25"/>
+  <text x="565" y="658" text-anchor="middle" dominant-baseline="middle" class="operator-text">×</text>
+  <text x="600" y="663" class="plane-title">Action interface</text>
+
+  <rect x="750" y="640" width="112" height="36" rx="18" class="pill-action"/>
+  <text x="806" y="658" text-anchor="middle" dominant-baseline="middle" class="pill-text-action">Meta action</text>
+  <rect x="872" y="640" width="106" height="36" rx="18" class="pill-action"/>
+  <text x="925" y="658" text-anchor="middle" dominant-baseline="middle" class="pill-text-action">Trajectory</text>
+  <rect x="988" y="640" width="130" height="36" rx="18" class="pill-action"/>
+  <text x="1053" y="658" text-anchor="middle" dominant-baseline="middle" class="pill-text-action">Direct control</text>
+
+  <text x="65" y="700" class="small">External models plug in through PolicyAdapter; LearnerSpec selects the trainable graph, and PolicyStep separates model actions from CARLA control.</text>
+</svg>

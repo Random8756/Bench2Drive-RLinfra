@@ -1,0 +1,52 @@
+site_name: Bench2Drive-RLInfra
+site_description: Scalable reinforcement learning infrastructure for autonomous driving planners in CARLA.
+site_author: Bench2Drive-RLInfra Authors
+docs_dir: source
+site_dir: site
+use_directory_urls: true
+
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - python
+    - yaml
+    - bash
+
+hooks:
+  - docs_hooks.py
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Introduction: start_introduction.md
+      - Setup Guide: start_setup.md
+      - Launch Training: start_launch_training.md
+  - Core Architecture:
+      - Architecture Overview: core_architecture.md
+      - Async Pool Tutorial: core_pool_tutorial.md
+      - Scenario Layer: core_scenarios.md
+      - Environment Layer: core_environment.md
+      - Simulation Layer: core_simulation.md
+      - Algorithm Layer: core_algorithms.md
+  - Training And Evaluation:
+      - Configuration Guide: configuration.md
+      - Evaluation and Diagnostics: eval_diagnostics.md
+  - End-to-End RL Finetune:
+      - Finetune Workflow: rl_finetune.md
+      - MindDrive Finetune Recipe: rl_finetune_minddrive.md
+      - DrivePi0 Finetune Recipe: rl_finetune_drivepi0.md
+      - Distributed RL Finetune: rl_finetune_distributed.md
+      - Custom Model Integration: rl_finetune_custom_model.md
+  - Resources:
+      - API Map: api_map.md
+      - Troubleshooting: troubleshooting.md
+
+extra_css:
+  - extra.css
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true

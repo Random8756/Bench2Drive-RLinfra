@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-label="Distributed finetuning topology">
+  <desc>One Slurm job launches one node agent per node. Rank 0 runs the DDP learner group and local collectors. Other ranks run collectors. All nodes coordinate through a shared filesystem run directory.</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; filter: url(#shadow); }
+      .storage { fill: #eef6ff; stroke: #60a5fa; stroke-width: 2; filter: url(#shadow); }
+      .role { fill: #f1f5f9; stroke: #94a3b8; stroke-width: 1.5; }
+      .process { fill: #ecfdf5; stroke: #34d399; stroke-width: 1.5; }
+      .carla { fill: #fff7ed; stroke: #fb923c; stroke-width: 1.5; }
+      .dir-group { fill: #ffffff; stroke: #c4b5fd; stroke-width: 1.25; }
+      .dir-accent { fill: #ede9fe; }
+      .label { font: 700 18px Arial, sans-serif; fill: #0f172a; }
+      .node-title { font: 700 20px Arial, sans-serif; fill: #0f172a; }
+      .rank-divider { stroke: #cbd5e1; stroke-width: 1.25; }
+      .rank-text { font: 700 10px Arial, sans-serif; letter-spacing: 1px; fill: #64748b; }
+      .role-label { fill: #eef6ff; stroke: #60a5fa; stroke-width: 1; }
+      .role-label-text { font: 700 10px Arial, sans-serif; letter-spacing: 0.85px; fill: #1e40af; }
+      .header-rule { stroke: #e2e8f0; stroke-width: 1.25; }
+      .text { font: 400 15px Arial, sans-serif; fill: #334155; }
+      .small { font: 400 13px Arial, sans-serif; fill: #475569; }
+      .group-title { font: 700 13px Arial, sans-serif; fill: #4338ca; }
+      .path-text { font: 400 14px Arial, sans-serif; fill: #334155; }
+      .link-halo { stroke: #e2e8f0; stroke-width: 8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .link { stroke: #64748b; stroke-width: 2.25; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .endpoint { fill: #ffffff; stroke: #64748b; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="560"/>
+
+  <rect x="290" y="42" width="620" height="172" rx="16" class="storage"/>
+  <text x="320" y="78" class="label">Shared storage run_dir</text>
+  <text x="320" y="104" class="text">POSIX-like filesystem visible from all nodes</text>
+  <rect x="320" y="120" width="560" height="34" rx="9" class="dir-group"/>
+  <path d="M 329 120 H 447 V 154 H 329 Q 320 154 320 145 V 129 Q 320 120 329 120 Z" class="dir-accent"/>
+  <text x="342" y="137" class="group-title" dominant-baseline="middle">Data artifacts</text>
+  <text x="465" y="137" class="path-text" dominant-baseline="middle">config.yaml</text>
+  <text x="580" y="137" class="path-text" dominant-baseline="middle">rollouts/</text>
+  <text x="684" y="137" class="path-text" dominant-baseline="middle">weights/</text>
+  <text x="780" y="137" class="path-text" dominant-baseline="middle">checkpoints/</text>
+
+  <rect x="320" y="164" width="560" height="34" rx="9" class="dir-group"/>
+  <path d="M 329 164 H 447 V 198 H 329 Q 320 198 320 189 V 173 Q 320 164 329 164 Z" class="dir-accent"/>
+  <text x="342" y="181" class="group-title" dominant-baseline="middle">Control state</text>
+  <text x="470" y="181" class="path-text" dominant-baseline="middle">events/</text>
+  <text x="565" y="181" class="path-text" dominant-baseline="middle">heartbeats/</text>
+  <text x="691" y="181" class="path-text" dominant-baseline="middle">control/</text>
+  <text x="795" y="181" class="path-text" dominant-baseline="middle">nodes/</text>
+
+  <path d="M 600 216 L 600 240 M 312 240 L 888 240 M 312 240 L 312 285 M 888 240 L 888 285" class="link-halo"/>
+  <path d="M 600 216 L 600 240 M 312 240 L 888 240 M 312 240 L 312 285 M 888 240 L 888 285" class="link"/>
+
+  <rect x="70" y="285" width="485" height="235" rx="16" class="panel"/>
+  <text x="100" y="324" class="node-title">Node 0</text>
+  <path d="M 180 307 V 329" class="rank-divider"/>
+  <text x="194" y="318" class="rank-text" dominant-baseline="middle">RANK 0</text>
+  <rect x="407" y="304" width="118" height="28" rx="6" class="role-label"/>
+  <text x="466" y="318" class="role-label-text" text-anchor="middle" dominant-baseline="middle">ROLE · LEARNER</text>
+  <path d="M 100 342 H 525" class="header-rule"/>
+
+  <rect x="100" y="354" width="425" height="58" rx="10" class="process"/>
+  <text x="120" y="378" class="text">DDP learner x 3 on cuda:0..2</text>
+  <text x="120" y="400" class="small">rank 0 owns Coordinator side effects</text>
+
+  <rect x="100" y="430" width="200" height="68" rx="10" class="process"/>
+  <text x="120" y="457" class="text">collector x 10</text>
+  <text x="120" y="481" class="small">2 per GPU on cuda:3..7</text>
+
+  <rect x="325" y="430" width="200" height="68" rx="10" class="carla"/>
+  <text x="345" y="457" class="text">CARLA x 10</text>
+  <text x="345" y="481" class="small">node-local loopback</text>
+
+  <rect x="645" y="285" width="485" height="235" rx="16" class="panel"/>
+  <text x="675" y="324" class="node-title">Node 1</text>
+  <path d="M 755 307 V 329" class="rank-divider"/>
+  <text x="769" y="318" class="rank-text" dominant-baseline="middle">RANK 1</text>
+  <rect x="965" y="304" width="135" height="28" rx="6" class="role-label"/>
+  <text x="1032.5" y="318" class="role-label-text" text-anchor="middle" dominant-baseline="middle">ROLE · COLLECTOR</text>
+  <path d="M 675 342 H 1100" class="header-rule"/>
+
+  <rect x="675" y="354" width="425" height="58" rx="10" class="role"/>
+  <text x="695" y="388" class="text">No learner process on nonzero ranks</text>
+
+  <rect x="675" y="430" width="200" height="68" rx="10" class="process"/>
+  <text x="695" y="457" class="text">collector x 16</text>
+  <text x="695" y="481" class="small">2 per GPU on cuda:0..7</text>
+
+  <rect x="900" y="430" width="200" height="68" rx="10" class="carla"/>
+  <text x="920" y="457" class="text">CARLA x 16</text>
+  <text x="920" y="481" class="small">node-local loopback</text>
+
+  <circle cx="600" cy="216" r="4.5" class="endpoint"/>
+  <circle cx="312" cy="285" r="4.5" class="endpoint"/>
+  <circle cx="888" cy="285" r="4.5" class="endpoint"/>
+
+  <text x="600" y="548" class="small" text-anchor="middle">More collector-only nodes follow the rank-1 pattern.</text>
+</svg>

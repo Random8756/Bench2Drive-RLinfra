@@ -1,0 +1,9 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers -m \"not carla_runtime and not carla_server and not gpu and not slow\""
+markers = [
+    "carla_runtime: requires the CARLA binding, official agents, and a vendor Python runtime, but no server",
+    "carla_server: requires test-owned running CARLA server processes",
+    "gpu: requires a CUDA-capable GPU",
+    "slow: long-running simulation or integration coverage",
+]

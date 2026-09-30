@@ -1,0 +1,3619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bench2Drive-RLInfra Config Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <style>
+        :root {
+            --accent: #667eea;
+            --accent-strong: #5568d3;
+            --accent-soft: rgba(102, 126, 234, 0.12);
+            --ink: #1f2437;
+            --ink-muted: #5f6b85;
+            --page-bg: #eef1f8;
+            --card-bg: #ffffff;
+            --panel-bg: #f7f8fc;
+            --line: #e3e7f2;
+            --line-strong: #d4daea;
+            --mono: 'SF Mono', 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+            --shadow-card: 0 1px 2px rgba(31, 36, 55, 0.05), 0 10px 30px rgba(31, 36, 55, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background:
+                radial-gradient(1100px 460px at 85% -180px, rgba(102, 126, 234, 0.16), transparent 60%),
+                radial-gradient(900px 420px at -10% -160px, rgba(118, 75, 162, 0.12), transparent 55%),
+                var(--page-bg);
+            min-height: 100vh;
+            padding: 28px 20px 48px;
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
+            overflow: visible;
+        }
+
+        .header {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(130deg, #232a4d 0%, #3a3f7d 55%, #59519e 100%);
+            color: white;
+            padding: 42px 40px 38px;
+            text-align: left;
+            border-radius: 18px;
+            box-shadow: 0 18px 44px rgba(35, 42, 77, 0.35);
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(560px 240px at 90% -60px, rgba(255, 255, 255, 0.16), transparent 65%),
+                radial-gradient(420px 220px at 65% 130%, rgba(102, 126, 234, 0.35), transparent 70%);
+            pointer-events: none;
+        }
+
+        .header .header-badge {
+            position: relative;
+            z-index: 1;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #cdd5ff;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            padding: 6px 12px;
+            border-radius: 999px;
+            margin-bottom: 16px;
+        }
+
+        .header .header-badge::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #8ea2ff;
+            box-shadow: 0 0 0 3px rgba(142, 162, 255, 0.25);
+        }
+
+        .header h1 {
+            position: relative;
+            z-index: 1;
+            font-size: 30px;
+            letter-spacing: -0.01em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            position: relative;
+            z-index: 1;
+            opacity: 0.86;
+            font-size: 14.5px;
+            max-width: 720px;
+            line-height: 1.6;
+        }
+
+        .toolbar {
+            position: sticky;
+            top: 12px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 18px 0 6px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            box-shadow: 0 8px 26px rgba(31, 36, 55, 0.10);
+        }
+
+        .toolbar-nav {
+            display: flex;
+            gap: 4px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toolbar-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .toolbar-nav a {
+            flex-shrink: 0;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--ink-muted);
+            text-decoration: none;
+            padding: 7px 12px;
+            border-radius: 999px;
+            transition: all 0.18s;
+            white-space: nowrap;
+        }
+
+        .toolbar-nav a:hover {
+            color: var(--accent-strong);
+            background: var(--accent-soft);
+        }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .toolbar-actions .btn {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .content {
+            padding: 22px 0 0;
+        }
+
+        .section {
+            margin-bottom: 22px;
+            padding: 26px 28px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow-card);
+            scroll-margin-top: 86px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--ink);
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 5px;
+            height: 20px;
+            background: linear-gradient(180deg, var(--accent), #764ba2);
+            border-radius: 3px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 7px;
+            color: var(--ink);
+            font-size: 13.5px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid var(--line-strong);
+            border-radius: 9px;
+            font-size: 14px;
+            color: var(--ink);
+            background: #fff;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+
+        .form-group select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235f6b85' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 34px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #a3adc4;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .preset-layout {
+            grid-template-columns: minmax(240px, 0.65fr) minmax(0, 1.65fr);
+            column-gap: 30px;
+            align-items: start;
+        }
+
+        .environment-fields {
+            grid-template-columns: repeat(5, minmax(150px, 1fr));
+        }
+
+        .environment-toggles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px 36px;
+            margin-top: 18px;
+        }
+
+        .environment-toggle {
+            min-width: 190px;
+            margin-bottom: 0;
+        }
+
+        .plain-checkbox {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0 !important;
+            font-weight: 500 !important;
+            cursor: pointer;
+        }
+
+        .plain-checkbox input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .action-list {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .action-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .action-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+            padding: 10px;
+            background: var(--panel-bg);
+            border: 1px solid var(--line);
+            border-radius: 9px;
+        }
+
+        .action-item input {
+            padding: 6px;
+            border: 1.5px solid var(--line-strong);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .btn {
+            padding: 11px 22px;
+            border: none;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 1px 2px rgba(85, 104, 211, 0.35);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-strong);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: var(--ink-muted);
+            border: 1.5px solid var(--line-strong);
+        }
+
+        .btn-secondary:hover {
+            background: var(--panel-bg);
+            color: var(--ink);
+            border-color: #bcc5dd;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: #d04355;
+            border: 1.5px solid #f0c4cb;
+            padding: 8px 14px;
+            font-size: 13px;
+        }
+
+        .btn-danger:hover {
+            background: #fbeef0;
+            border-color: #e39aa5;
+        }
+
+        .btn-success {
+            background: #1f9d55;
+            color: white;
+            box-shadow: 0 1px 2px rgba(31, 157, 85, 0.35);
+        }
+
+        .btn-success:hover {
+            background: #188547;
+            box-shadow: 0 6px 16px rgba(31, 157, 85, 0.30);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 26px;
+            margin-bottom: 10px;
+            padding: 22px 0;
+            border-top: 1px solid var(--line);
+        }
+
+        .toast-region {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: grid;
+            gap: 10px;
+            width: min(380px, calc(100vw - 40px));
+            pointer-events: none;
+        }
+
+        .app-toast {
+            display: grid;
+            grid-template-columns: 4px minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: start;
+            overflow: hidden;
+            padding: 13px 13px 13px 0;
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid var(--line-strong);
+            border-radius: 10px;
+            box-shadow: 0 14px 36px rgba(31, 36, 55, 0.18);
+            opacity: 0;
+            transform: translateY(-8px);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+            pointer-events: auto;
+        }
+
+        .app-toast.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .app-toast.is-leaving {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+
+        .app-toast-bar {
+            align-self: stretch;
+            background: var(--accent);
+        }
+
+        .app-toast-success .app-toast-bar {
+            background: #1f9d55;
+        }
+
+        .app-toast-warning .app-toast-bar {
+            background: #d99012;
+        }
+
+        .app-toast-error .app-toast-bar {
+            background: #d04355;
+        }
+
+        .app-toast-message {
+            color: var(--ink);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .app-toast-close {
+            width: 24px;
+            height: 24px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--ink-muted);
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .app-toast-close:hover {
+            background: var(--panel-bg);
+            color: var(--ink);
+        }
+
+        .inline-action-panel {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            width: fit-content;
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--panel-bg);
+            border: 1px solid var(--line);
+            border-radius: 9px;
+        }
+
+        .inline-action-panel[hidden] {
+            display: none;
+        }
+
+        .inline-action-panel .form-group {
+            width: 220px;
+            margin-bottom: 0;
+        }
+
+        .history-inputs {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .history-item {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            background: var(--panel-bg);
+            border: 1px solid var(--line);
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        .history-item input {
+            width: 70px;
+            padding: 6px;
+            border: 1.5px solid var(--line-strong);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .info-text {
+            font-size: 12.5px;
+            color: var(--ink-muted);
+            margin-top: 5px;
+            line-height: 1.55;
+        }
+
+        .preset-summary {
+            display: grid;
+            grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+            gap: 8px 18px;
+            min-height: 44px;
+            padding: 12px 14px;
+            background: var(--panel-bg);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+        }
+
+        .preset-summary-row {
+            min-width: 0;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .preset-summary-row strong {
+            color: var(--ink);
+            font-family: inherit;
+        }
+
+        .preset-summary-source {
+            grid-column: 1 / -1;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--line);
+            color: var(--accent-strong);
+        }
+
+        .continuous-config {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .continuous-action-item {
+            display: grid;
+            grid-template-columns: auto 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .continuous-action-item label {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .continuous-action-item input {
+            padding: 8px;
+            border: 1.5px solid var(--line-strong);
+            border-radius: 6px;
+        }
+
+        .help-box {
+            background: linear-gradient(135deg, #f4f6ff 0%, #fbf6ff 100%);
+            border: 1px solid #dfe4fb;
+            border-left: 4px solid var(--accent);
+            padding: 18px 22px;
+            border-radius: 12px;
+            margin-bottom: 22px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .help-box h3 {
+            color: #3c4577;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 9px;
+        }
+
+        .help-box ul {
+            margin-left: 20px;
+            color: #4c5570;
+            font-size: 13.5px;
+            line-height: 1.85;
+        }
+
+        .bev-settings {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .bev-preview {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .params-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .preview-canvas {
+            border: 1px solid #3a4160;
+            border-radius: 10px;
+            background: #2c2c2c;
+            box-shadow: 0 10px 28px rgba(20, 24, 42, 0.28);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .element-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            background: var(--panel-bg);
+            border: 1px solid var(--line);
+            padding: 14px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.16s;
+            position: relative;
+            font-size: 13.5px;
+        }
+
+        .checkbox-item:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+            flex-shrink: 0;
+            accent-color: var(--accent);
+        }
+
+        input[type="checkbox"],
+        input[type="radio"] {
+            accent-color: var(--accent);
+        }
+
+        .color-indicator {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            min-width: 16px;
+            min-height: 16px;
+            border-radius: 4px;
+            border: 1px solid rgba(31, 36, 55, 0.18);
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        
+        .element-color-picker {
+            width: 16px;
+            height: 16px;
+            min-width: 16px;
+            min-height: 16px;
+            border: 1px solid var(--line-strong);
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+
+        .scalar-config {
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .scalar-config:not(:empty) {
+            background: white;
+            padding: 15px;
+        }
+
+        .scalar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--panel-bg);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .scalar-normalize {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--ink-muted);
+            font-size: 12px;
+        }
+
+        .scalar-normalize input {
+            width: 76px;
+            padding: 6px 8px;
+            border: 1.5px solid var(--line-strong);
+            border-radius: 6px;
+        }
+
+        .preview-legend {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            width: min(100%, 820px);
+            margin: 15px auto 0;
+            font-size: 12.5px;
+        }
+
+        .legend-group {
+            display: grid;
+            grid-template-columns: 128px repeat(4, minmax(0, 1fr));
+            align-items: center;
+            column-gap: 16px;
+        }
+
+        .legend-group-title {
+            padding-right: 16px;
+            border-right: 1px solid var(--line);
+            color: var(--ink-muted);
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            white-space: nowrap;
+        }
+
+        .history-preview {
+            margin-top: 12px;
+            color: var(--ink-muted);
+            font-size: 12.5px;
+            line-height: 1.55;
+        }
+
+        .history-preview strong {
+            display: block;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .history-preview p {
+            text-align: center;
+        }
+
+        .route-list {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .route-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .route-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .route-item input[type="text"] {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1.5px solid var(--line-strong);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: var(--mono);
+        }
+
+        .route-item input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        code {
+            background: #eceffa;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            color: #45508a;
+        }
+
+        #configPreview {
+            background: #1e2438;
+            color: #dbe2ff;
+            padding: 20px 22px;
+            border-radius: 12px;
+            border: 1px solid #303a5c;
+            max-height: 440px;
+            overflow-y: auto;
+            font-family: var(--mono);
+            font-size: 12.8px;
+            line-height: 1.62;
+            box-shadow: inset 0 1px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        .carla-env-item {
+            border: 1px solid var(--line) !important;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 12.5px;
+            color: var(--ink-muted);
+            padding-bottom: 8px;
+        }
+
+        .footer-note code {
+            font-size: 12px;
+        }
+
+        @media (max-width: 900px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                overflow: hidden;
+            }
+
+            .toolbar-nav {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .toolbar-actions {
+                justify-content: flex-end;
+            }
+
+            .header {
+                padding: 32px 26px;
+            }
+
+            .section {
+                padding: 20px 18px;
+            }
+
+            .preset-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .environment-fields {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            .preset-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .preset-summary-source {
+                grid-column: 1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding-right: 12px;
+                padding-left: 12px;
+            }
+
+            .toast-region {
+                top: 12px;
+                right: 12px;
+                width: calc(100vw - 24px);
+            }
+
+            .inline-action-panel {
+                align-items: stretch;
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .inline-action-panel .form-group {
+                width: 100%;
+            }
+
+            .carla-env-item {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            .carla-env-item > span:first-child {
+                grid-column: 1 / -1;
+            }
+
+            .carla-env-item > div {
+                min-width: 0;
+            }
+
+            .carla-env-item > button {
+                justify-self: end;
+            }
+
+            .params-row,
+            .element-selector {
+                grid-template-columns: 1fr !important;
+            }
+
+            .history-inputs {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .scalar-item {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .scalar-normalize {
+                justify-content: space-between;
+            }
+
+            .scalar-item > .btn {
+                align-self: flex-end;
+            }
+
+            .form-group > label {
+                overflow-wrap: anywhere;
+            }
+
+            .preview-legend {
+                width: min(100%, 340px);
+                gap: 16px;
+            }
+
+            .legend-group {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px 16px;
+            }
+
+            .legend-group-title {
+                grid-column: 1 / -1;
+                padding-right: 0;
+                padding-bottom: 4px;
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .legend-item {
+                white-space: normal;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span class="header-badge">Bench2Drive-RLinfra</span>
+            <h1>Bench2Drive-RLInfra Config Editor</h1>
+            <p>Select an algorithm preset, then configure environment, CARLA, routes, reward display, and observations.</p>
+        </div>
+
+        <div class="toolbar">
+            <nav class="toolbar-nav" aria-label="Configuration sections">
+                <a href="#sec-preset">Preset</a>
+                <a href="#sec-environment">Environment</a>
+                <a href="#sec-carla">CARLA</a>
+                <a href="#sec-routes">Routes</a>
+                <a href="#sec-vector-obs">Vector Obs</a>
+                <a href="#sec-history">History</a>
+                <a href="#sec-scalars">Scalars</a>
+                <a href="#sec-preview">Preview</a>
+                <a href="#sec-import">Import</a>
+            </nav>
+            <div class="toolbar-actions">
+                <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import YAML</button>
+                <button class="btn btn-success" onclick="exportYAML()">Export YAML</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="help-box">
+                <h3>Guide</h3>
+                <ul>
+                    <li><strong>Algorithm preset:</strong> uses built-in settings aligned with the matching repository YAML; the file is not read at runtime.</li>
+                    <li><strong>Environment:</strong> configure the common environment, CARLA, route, and observation fields.</li>
+                    <li><strong>Reward:</strong> the registered handler is selected by the algorithm preset.</li>
+                    <li><strong>Import round trip:</strong> imported YAML becomes the export base, so fields not exposed in this editor are preserved.</li>
+                    <li><strong>Export:</strong> generates the <code>algorithm/policy/training/env</code> YAML structure used by this repository.</li>
+                </ul>
+            </div>
+
+            <div class="section" id="sec-preset">
+                <div class="section-title">Algorithm Preset</div>
+                <div class="form-row preset-layout">
+                    <div class="form-group">
+                        <label>Algorithm</label>
+                        <select id="algorithmPreset" onchange="loadSelectedPresetToUI()">
+                            <option value="ppo" selected>PPO</option>
+                            <option value="sac">SAC</option>
+                            <option value="td3">TD3</option>
+                            <option value="a2c">A2C</option>
+                        </select>
+                        <div class="info-text">Loads the built-in preset aligned with the listed repository YAML; that file is not read at runtime. Imported YAML keeps its own values.</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Preset Summary</label>
+                        <div id="presetSummary" class="preset-summary"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="sec-environment">
+                <div class="section-title">Environment</div>
+                
+                <div class="form-row environment-fields">
+                    <div class="form-group">
+                        <label>Result Directory</label>
+                        <input type="text" id="resultDir" value="./results" style="font-family: 'Consolas', 'Monaco', monospace;">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Episode Steps</label>
+                        <input type="number" id="maxEpisodeSteps" value="1024" min="1" max="10000">
+                    </div>
+                    <div class="form-group">
+                        <label>Blocked Timeout (seconds)</label>
+                        <input type="number" id="vehicleBlockedSecondsInline" value="180" min="1" max="600" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Route Deviation Threshold (meters)</label>
+                        <input type="number" id="routeDeviationMetersInline" value="30" min="1" max="100" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Reward</label>
+                        <input type="text" id="rewardDisplay" value="ppo" readonly>
+                        <div class="info-text">The registered handler is selected by the algorithm preset.</div>
+                    </div>
+                </div>
+
+                <div class="environment-toggles">
+                    <div class="form-group environment-toggle">
+                        <label>Debug Mode</label>
+                        <label class="plain-checkbox">
+                            <input type="checkbox" id="debugMode">
+                            <span>Enable debug mode</span>
+                        </label>
+                        <div class="info-text"><code>environment.debug_mode</code></div>
+                    </div>
+                    <div class="form-group environment-toggle">
+                        <label>Record Episodes</label>
+                        <label class="plain-checkbox">
+                            <input type="checkbox" id="recordMode">
+                            <span>Enable episode recording</span>
+                        </label>
+                        <div class="info-text"><code>environment.record</code></div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <div class="section" id="sec-carla">
+                <div class="section-title">CARLA</div>
+                
+                <div class="form-row" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label>Environment Frequency (Hz)</label>
+                        <input type="number" id="envFrequency" value="10" min="1" max="100" onchange="updateBEVPreview()">
+                        <div class="info-text">Environment update frequency.</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Timeout</label>
+                        <input type="number" id="carlaTimeout" value="60" min="1" max="600" step="0.1">
+                        <div class="info-text">Seconds.</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Quality Level</label>
+                        <select id="carlaQualityLevel">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Epic">Epic</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label>Connection Timeout</label>
+                        <input type="number" id="carlaConnectionTimeout" value="30" min="1" max="300" step="0.1">
+                        <div class="info-text">Single connection timeout in seconds.</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Server Wait Timeout</label>
+                        <input type="number" id="carlaServerWaitTimeout" value="300" min="1" max="600" step="0.1">
+                        <div class="info-text">Maximum time to wait for the server to start.</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Retry Interval</label>
+                        <input type="number" id="carlaRetryInterval" value="2.0" min="0.1" max="60" step="0.1">
+                        <div class="info-text">Retry interval in seconds.</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Max Retries</label>
+                        <input type="number" id="carlaMaxRetries" value="5" min="1" max="200">
+                        <div class="info-text">Maximum retry count after connection failures.</div>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; border: 2px solid #dee2e6;">
+                    <h5 style="margin-bottom: 15px; color: #667eea;">Multi-Environment Settings (num_envs)</h5>
+                    <div class="info-text" style="margin-bottom: 15px;">
+                        Configure parallel environments. Each environment needs its own port, traffic manager port, seed, GPU ID, and host.
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Environment Count (num_envs): <span id="numEnvsDisplay" style="font-weight: bold; color: #667eea;">1</span></label>
+                    </div>
+                    
+                    <div id="carlaEnvList" style="max-height: 300px; overflow-y: auto;">
+                        <div class="carla-env-item" style="display: grid; grid-template-columns: 50px 1fr 1fr 1fr 1fr 1fr auto; gap: 8px; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 8px;">
+                            <span style="font-weight: 500; color: #495057; font-size: 13px;">Env 0</span>
+                            <div>
+                                <label style="font-size: 11px; color: #6c757d;">Port</label>
+                                <input type="number" class="carla-port" value="2026" min="1" max="65535" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; color: #6c757d;">TM Port</label>
+                                <input type="number" class="carla-tm-port" value="8202" min="1" max="65535" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; color: #6c757d;">TM Seed</label>
+                                <input type="number" class="carla-tm-seed" value="0" min="0" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; color: #6c757d;">GPU ID</label>
+                                <input type="number" class="carla-gpu" value="0" min="0" max="15" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; color: #6c757d;">Host</label>
+                                <input type="text" class="carla-host" value="127.0.3.135" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px;">
+                            </div>
+                            <button class="btn btn-danger" onclick="removeCarlaEnv(this)" style="padding: 5px 10px; font-size: 12px;">x</button>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-secondary" onclick="addCarlaEnv()" style="margin-top: 10px;">+ Add Environment</button>
+                    <button class="btn btn-primary" id="autoFillButton" aria-controls="autoFillPanel" aria-expanded="false" onclick="openAutoFillPanel()" style="margin-top: 10px; margin-left: 10px;">Auto Fill</button>
+                    <form class="inline-action-panel" id="autoFillPanel" onsubmit="event.preventDefault(); applyAutoFillCarlaEnvs();" novalidate hidden>
+                        <div class="form-group">
+                            <label for="autoFillCount">Environment Count</label>
+                            <input type="number" id="autoFillCount" value="24" min="1" max="64" step="1">
+                        </div>
+                        <button class="btn btn-primary" type="submit">Apply</button>
+                        <button class="btn btn-secondary" type="button" onclick="closeAutoFillPanel()">Cancel</button>
+                    </form>
+                    <div class="info-text" style="margin-top: 8px;">
+                        Auto fill creates more environments from the first row and increments ports automatically.
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Launch Options</label>
+                    <div class="element-selector" style="grid-template-columns: repeat(3, 1fr);">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="carlaRenderOffScreen" checked>
+                            <span>-RenderOffScreen</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="carlaNoSound" checked>
+                            <span>-nosound</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="carlaNullRhi" checked>
+                            <span>-nullrhi</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="carlaNoSteam">
+                            <span>-nosteam</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="carlaOpenGL">
+                            <span>-opengl</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="carlaVulkan">
+                            <span>-vulkan</span>
+                        </label>
+                    </div>
+                    <div class="info-text" style="margin-top: 10px;">
+                        <strong>Options:</strong>
+                        -RenderOffScreen (headless) | -nosound (disable sound) | -nullrhi (disable rendering) | -nosteam (disable Steam) | -opengl / -vulkan (render backend)
+                    </div>
+                </div>
+                    
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Extra Arguments (optional)</label>
+                    <input type="text" id="carlaExtraArgs" value="-RPCThreads=2 -StreamingThreads=2 -SecondaryThreads=2 -nothreading" placeholder="Additional arguments, e.g. -benchmark -deterministic" style="font-family: 'Consolas', 'Monaco', monospace;">
+                    <div class="info-text">Enter additional command-line arguments separated by spaces.</div>
+                </div>
+            </div>
+
+            <div class="section" id="sec-routes">
+                <div class="section-title">Routes</div>
+                <div class="info-text" style="margin-bottom: 15px;">
+                    Configure the route file. <code>sample_mode</code> and adaptive details come from the selected preset or imported YAML.
+                </div>
+                
+                <div class="form-group">
+                    <label>Route File (.xml)</label>
+                    <div class="route-list" id="routeFileList">
+                        <div class="route-item">
+                            <input type="text" id="routeFile" value="resources/routes/train_routes_demo.xml" placeholder="Enter XML route file path">
+                        </div>
+                    </div>
+                    <div class="info-text" style="margin-top: 8px;">
+                        Repository default: <code>resources/routes/train_routes_demo.xml</code>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="enableMaxRouteLength" onchange="toggleMaxRouteLength()">
+                        <span>Limit Max Route Length</span>
+                    </label>
+                    <div id="maxRouteLengthInput" style="display: none; margin-top: 10px;">
+                        <input type="number" id="maxRouteLength" value="150" min="50" max="10000" style="width: 150px;">
+                        <span style="margin-left: 5px;">meters</span>
+                        <div class="info-text">Maximum route length.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="sec-vector-obs">
+                <div class="section-title">Vector Observation Space</div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; font-size: 14px;">Vector Observation Type</label>
+                    <select id="bevType" onchange="updateBEVPreview(); updateColorPickerVisibility();" style="margin-top: 8px;">
+                        <option value="bev_mask">BEV Mask</option>
+                        <option value="bev_image">BEV Image</option>
+                        <option value="none">Disable</option>
+                    </select>
+                </div>
+
+                <div id="bevConfigSection">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label>Map Cache Directory (map_dir)</label>
+                        <input type="text" id="mapDir" value="resources/maps" style="font-family: 'Consolas', 'Monaco', monospace;">
+                        <div class="info-text">Directory for pre-cached map data.</div>
+                    </div>
+                    
+                    <div class="bev-settings" style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 15px; color: #495057;">Frame Settings</h4>
+                        <div class="params-row">
+                            <div class="form-group">
+                                <label>Frame Width (meters)</label>
+                                <input type="number" id="maskWidth" value="64" onchange="updateBEVPreview()">
+                            </div>
+                            <div class="form-group">
+                                <label>Ego-to-Bottom Distance (meters)</label>
+                                <input type="number" id="egoToBottom" value="32" onchange="updateBEVPreview()">
+                            </div>
+                            <div class="form-group">
+                                <label>Resolution (pixels/meter)</label>
+                                <input type="number" id="pixelsPerMeter" value="2" min="1" max="20" onchange="updateBEVPreview()">
+                                <div class="info-text" id="resolutionInfo">Preview size: 128x128</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bev-preview" style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 15px; color: #495057;">Live Preview</h4>
+                        <canvas id="bevCanvas" class="preview-canvas" width="400" height="400"></canvas>
+                        <div class="preview-legend" aria-label="Live preview legend">
+                            <div class="legend-group">
+                                <div class="legend-group-title">Scene</div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: #2E3436;"></span>
+                                    <span>Road</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: #808080;"></span>
+                                    <span>Lanes</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: rgba(128, 128, 128, 0.3);"></span>
+                                    <span>Navigation</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: white;"></span>
+                                    <span>Ego Vehicle</span>
+                                </div>
+                            </div>
+                            <div class="legend-group">
+                                <div class="legend-group-title">Actors</div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: #4A90E2;"></span>
+                                    <span>Vehicles</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: #E74C3C;"></span>
+                                    <span>Emergency Vehicles</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: #87CEEB;"></span>
+                                    <span>Pedestrians</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: #8B0000;"></span>
+                                    <span>Obstacles</span>
+                                </div>
+                            </div>
+                            <div class="legend-group">
+                                <div class="legend-group-title">Traffic Controls</div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: #FF0000;"></span>
+                                    <span>Red Light</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: #FFD700;"></span>
+                                    <span>Yellow Light</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: #00FF00;"></span>
+                                    <span>Green Light</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="color-indicator" style="background: #A0A000;"></span>
+                                    <span>Stop Sign</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-text" style="margin-top: 10px; text-align: center; color: #6c757d;">
+                            Preview vehicle speed is 4 m/s.
+                        </div>
+                        <div class="history-preview">
+                            <strong>History Preview:</strong>
+                            <p>More negative indices, such as -16, show older frames with lower opacity; history can be enabled independently for each element.</p>
+                        </div>
+                    </div>
+
+                    <div class="bev-settings">
+                        <h4 style="margin-bottom: 15px; color: #495057;">Displayed Elements <span style="font-size: 12px; color: #888; font-weight: normal;">(CHANNEL_ORDER)</span></h4>
+                            <div class="element-selector">
+                                <div class="checkbox-item" id="backgroundColorRow" style="display: none;">
+                                    <span style="width: 18px; flex-shrink: 0;"></span>
+                                    <span class="color-indicator" id="indicatorBackground" style="background: #2C2C2C;"></span>
+                                    <input type="color" id="colorBackground" value="#2C2C2C" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Background</span>
+                                    <span style="margin-left: auto; font-size: 11px; color: #999;">-</span>
+                                </div>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showRoad" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorRoad" style="background: #2E3436;"></span>
+                                    <input type="color" id="colorRoad" value="#2E3436" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Road</span>
+                                    <span style="margin-left: auto; font-size: 11px; color: #999;" title="Static layers do not use history">-</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showLanes" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorLanes" style="background: #808080;"></span>
+                                    <input type="color" id="colorLanes" value="#808080" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Lanes</span>
+                                    <span style="margin-left: auto; font-size: 11px; color: #999;" title="Static layers do not use history">-</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showNavigation" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorNavigation" style="background: rgba(128, 128, 128, 0.3);"></span>
+                                    <input type="color" id="colorNavigation" value="#808080" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Navigation</span>
+                                    <span style="margin-left: auto; font-size: 11px; color: #999;" title="Static layers do not use history">-</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showEgo" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorEgo" style="background: #FFFFFF;"></span>
+                                    <input type="color" id="colorEgo" value="#FFFFFF" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Ego Vehicle</span>
+                                    <input type="checkbox" id="egoMultiFrame" onchange="updateBEVPreview()" title="Use history" style="margin-left: auto;">
+                                    <span style="font-size: 11px; color: #666;">History</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showVehicles" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorVehicles" style="background: #4A90E2;"></span>
+                                    <input type="color" id="colorVehicles" value="#4A90E2" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Vehicles</span>
+                                    <input type="checkbox" id="vehiclesMultiFrame" checked onchange="updateBEVPreview()" title="Use history" style="margin-left: auto;">
+                                    <span style="font-size: 11px; color: #666;">History</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showEmergency" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorEmergency" style="background: #E74C3C;"></span>
+                                    <input type="color" id="colorEmergency" value="#E74C3C" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Emergency Vehicles</span>
+                                    <input type="checkbox" id="emergencyMultiFrame" checked onchange="updateBEVPreview()" title="Use history" style="margin-left: auto;">
+                                    <span style="font-size: 11px; color: #666;">History</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showPedestrians" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorPedestrians" style="background: #87CEEB;"></span>
+                                    <input type="color" id="colorPedestrians" value="#87CEEB" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Pedestrians</span>
+                                    <input type="checkbox" id="pedestriansMultiFrame" checked onchange="updateBEVPreview()" title="Use history" style="margin-left: auto;">
+                                    <span style="font-size: 11px; color: #666;">History</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showObstacles" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorObstacles" style="background: #8B0000;"></span>
+                                    <input type="color" id="colorObstacles" value="#8B0000" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Obstacles</span>
+                                    <input type="checkbox" id="obstaclesMultiFrame" onchange="updateBEVPreview()" title="Use history" style="margin-left: auto;">
+                                    <span style="font-size: 11px; color: #666;">History</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showRedLight" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorRedLight" style="background: #FF0000;"></span>
+                                    <input type="color" id="colorRedLight" value="#FF0000" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Red Light</span>
+                                    <input type="checkbox" id="redLightMultiFrame" onchange="updateBEVPreview()" title="Use history" style="margin-left: auto;">
+                                    <span style="font-size: 11px; color: #666;">History</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showYellowLight" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorYellowLight" style="background: #FFD700;"></span>
+                                    <input type="color" id="colorYellowLight" value="#FFD700" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Yellow Light</span>
+                                    <input type="checkbox" id="yellowLightMultiFrame" onchange="updateBEVPreview()" title="Use history" style="margin-left: auto;">
+                                    <span style="font-size: 11px; color: #666;">History</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showGreenLight" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorGreenLight" style="background: #00FF00;"></span>
+                                    <input type="color" id="colorGreenLight" value="#00FF00" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Green Light</span>
+                                    <input type="checkbox" id="greenLightMultiFrame" onchange="updateBEVPreview()" title="Use history" style="margin-left: auto;">
+                                    <span style="font-size: 11px; color: #666;">History</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showStopSigns" checked onchange="updateBEVPreview(); updateColorPickerVisibility();">
+                                    <span class="color-indicator" id="indicatorStopSigns" style="background: #A0A000;"></span>
+                                    <input type="color" id="colorStopSigns" value="#A0A000" onchange="updateBEVPreview()" class="element-color-picker" style="display: none;">
+                                    <span>Stop Signs</span>
+                                    <input type="checkbox" id="stopSignsMultiFrame" onchange="updateBEVPreview()" title="Use history" style="margin-left: auto;">
+                                    <span style="font-size: 11px; color: #666;">History</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 15px;" id="laneStyleSection">
+                                <label>Lane Style</label>
+                                <div class="radio-group">
+                                    <label class="radio-option">
+                                        <input type="radio" name="laneStyle" value="unified" checked onchange="updateBEVPreview()">
+                                        <span>Unified</span>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="laneStyle" value="split" onchange="updateBEVPreview()">
+                                        <span>Split</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="polygonConfigSection" style="display: none;">
+                                <h4 style="margin: 20px 0 15px; color: #495057;">Vector Settings</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Navigation Point Density (points/meter)</label>
+                                        <input type="number" id="navPointDensity" value="0.5" step="0.1" min="0.1" max="5" onchange="updateBEVPreview()">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Navigation Path Length (meters)</label>
+                                        <input type="number" id="navPathLength" value="30" min="5" max="100" onchange="updateBEVPreview()">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Lane Point Density (points/meter)</label>
+                                        <input type="number" id="lanePointDensity" value="1" step="0.1" min="0.1" max="5" onchange="updateBEVPreview()">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Point Size (pixels)</label>
+                                        <input type="number" id="pointSize" value="3" min="1" max="10" onchange="updateBEVPreview()">
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="sec-history">
+                <div class="section-title">History Frames</div>
+                <div class="info-text" style="margin-bottom: 15px;">
+                    Configure vector history independently from scalar history. Negative values refer to past frames, and 0 is the current frame.
+                </div>
+                
+                <div class="form-group">
+                    <label>Vector History Indices (<code>observation_space.vector.history_index</code>)</label>
+                    <div class="history-inputs" id="bevHistoryIndex">
+                        <div class="history-item">
+                            <input type="number" value="-16" onchange="updateBEVPreview()">
+                            <button class="btn btn-danger" onclick="removeHistoryIndex(this); updateBEVPreview()">x</button>
+                        </div>
+                        <div class="history-item">
+                            <input type="number" value="-11" onchange="updateBEVPreview()">
+                            <button class="btn btn-danger" onclick="removeHistoryIndex(this); updateBEVPreview()">x</button>
+                        </div>
+                        <div class="history-item">
+                            <input type="number" value="-6" onchange="updateBEVPreview()">
+                            <button class="btn btn-danger" onclick="removeHistoryIndex(this); updateBEVPreview()">x</button>
+                        </div>
+                        <div class="history-item">
+                            <input type="number" value="-1" onchange="updateBEVPreview()">
+                            <button class="btn btn-danger" onclick="removeHistoryIndex(this); updateBEVPreview()">x</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="addBEVHistoryIndex()" style="margin-top: 10px;">+ Add Frame</button>
+                    <div class="info-text" style="margin-top: 10px;">
+                        - Frame indices are used to retrieve historical observations.<br>
+                        - Example: -16 means 16 frames ago, converted to time by the environment frequency.<br>
+                        - Vector elements with History enabled use these frames in the preview.
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="sec-scalars">
+                <div class="section-title">Scalar Observations</div>
+                <div class="info-text" style="margin-bottom: 15px;">
+                    Configure scalar items and their independent history window. Supported types follow <code>b2d_rlinfra.environment.spaces</code>.
+                </div>
+
+                <div class="scalar-config" id="scalarObservations"></div>
+
+                <div class="form-group">
+                    <label>Scalar History Indices (<code>observation_space.scalars.history_index</code>)</label>
+                    <div class="history-inputs" id="scalarHistoryIndex">
+                        <div class="history-item">
+                            <input type="number" value="-16">
+                            <button class="btn btn-danger" onclick="removeHistoryIndex(this)">x</button>
+                        </div>
+                        <div class="history-item">
+                            <input type="number" value="-11">
+                            <button class="btn btn-danger" onclick="removeHistoryIndex(this)">x</button>
+                        </div>
+                        <div class="history-item">
+                            <input type="number" value="-6">
+                            <button class="btn btn-danger" onclick="removeHistoryIndex(this)">x</button>
+                        </div>
+                        <div class="history-item">
+                            <input type="number" value="-1">
+                            <button class="btn btn-danger" onclick="removeHistoryIndex(this)">x</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="addScalarHistoryIndex()" style="margin-top: 10px;">+ Add Scalar Frame</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Add Scalar Observation</label>
+                    <select id="scalarTypeSelect">
+                        <option value="">-- Select an observation --</option>
+                        <option value="speed">Speed</option>
+                        <option value="throttle">Throttle</option>
+                        <option value="brake">Brake</option>
+                        <option value="steer">Steer</option>
+                        <option value="reverse">Reverse</option>
+                        <option value="gear">Gear</option>
+                        <option value="location">Location</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="addScalarObservation()" style="margin-top: 10px;">+ Add Scalar Observation</button>
+                </div>
+            </div>
+
+            <div class="section" id="sec-preview">
+                <div class="section-title">Config Preview</div>
+                <button class="btn btn-primary" onclick="previewConfig()" style="margin-bottom: 15px;">Generate Preview</button>
+                <pre id="configPreview" style="display: none;"></pre>
+            </div>
+
+            <div class="section" id="sec-import">
+                <div class="section-title">Quick Paste Import</div>
+                <div class="info-text" style="margin-bottom: 15px;">
+                    Paste YAML content below and parse it into the form.
+                </div>
+                <textarea id="pasteYamlArea" placeholder="Paste YAML content here..." style="height: 150px; font-family: var(--mono); font-size: 13px; resize: vertical;"></textarea>
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="importFromPaste()">Parse and Import</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('pasteYamlArea').value = ''">Clear</button>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="document.getElementById('importFile').click()">Import YAML File</button>
+                <button class="btn btn-success" onclick="exportYAML()">Export YAML Config</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="importFile" accept=".yaml,.yml" style="display: none;" onchange="importYAML(event)">
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="false"></div>
+
+    <script>
+        let scalarObsCounter = 0;
+        let activeBaseConfig = null;
+        let activeConfigSource = 'configs/ppo_bev_example.yaml';
+
+        function dismissToast(toast) {
+            if (!toast || toast.classList.contains('is-leaving')) return;
+            clearTimeout(toast.dismissTimer);
+            toast.classList.add('is-leaving');
+            toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+            setTimeout(() => toast.remove(), 250);
+        }
+
+        function showToast(message, type = 'info', duration) {
+            const region = document.getElementById('toastRegion');
+            if (!region) return;
+            while (region.children.length >= 4) {
+                region.firstElementChild.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `app-toast app-toast-${type}`;
+            toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+            const bar = document.createElement('span');
+            bar.className = 'app-toast-bar';
+            bar.setAttribute('aria-hidden', 'true');
+
+            const text = document.createElement('div');
+            text.className = 'app-toast-message';
+            text.textContent = String(message);
+
+            const close = document.createElement('button');
+            close.className = 'app-toast-close';
+            close.type = 'button';
+            close.setAttribute('aria-label', 'Dismiss notification');
+            close.textContent = '×';
+            close.addEventListener('click', () => dismissToast(toast));
+
+            toast.append(bar, text, close);
+            region.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('is-visible'));
+            toast.dismissTimer = setTimeout(
+                () => dismissToast(toast),
+                duration ?? (type === 'error' ? 7000 : 4000)
+            );
+        }
+        
+        function removeHistoryIndex(btn) {
+            btn.parentElement.remove();
+        }
+
+        function toggleScaleBbox() {
+            const checkbox = document.getElementById('enableScaleBbox');
+            const inputDiv = document.getElementById('scaleBboxInput');
+            inputDiv.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        function addCarlaEnv() {
+            const container = document.getElementById('carlaEnvList');
+            const envCount = container.querySelectorAll('.carla-env-item').length;
+            const basePort = 2000;
+            const baseTmPort = 8000;
+            const baseTmSeed = 0;
+            const baseGpu = 0;
+            const baseHost = `127.0.0.${1 + envCount}`;
+            
+            const item = document.createElement('div');
+            item.className = 'carla-env-item';
+            item.style.cssText = 'display: grid; grid-template-columns: 50px 1fr 1fr 1fr 1fr 1fr auto; gap: 8px; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 8px;';
+            item.innerHTML = `
+                <span style="font-weight: 500; color: #495057; font-size: 13px;">Env ${envCount}</span>
+                <div>
+                    <label style="font-size: 11px; color: #6c757d;">Port</label>
+                    <input type="number" class="carla-port" value="${basePort}" min="1" max="65535" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #6c757d;">TM Port</label>
+                    <input type="number" class="carla-tm-port" value="${baseTmPort}" min="1" max="65535" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #6c757d;">TM Seed</label>
+                    <input type="number" class="carla-tm-seed" value="${baseTmSeed}" min="0" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #6c757d;">GPU ID</label>
+                    <input type="number" class="carla-gpu" value="${baseGpu}" min="0" max="15" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #6c757d;">Host</label>
+                    <input type="text" class="carla-host" value="${baseHost}" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px;">
+                </div>
+                <button class="btn btn-danger" onclick="removeCarlaEnv(this)" style="padding: 5px 10px; font-size: 12px;">x</button>
+            `;
+            container.appendChild(item);
+            updateNumEnvsDisplay();
+        }
+        
+        function removeCarlaEnv(btn) {
+            const container = document.getElementById('carlaEnvList');
+            const items = container.querySelectorAll('.carla-env-item');
+            if (items.length > 1) {
+                btn.closest('.carla-env-item').remove();
+                const remainingItems = container.querySelectorAll('.carla-env-item');
+                remainingItems.forEach((item, index) => {
+                    item.querySelector('span').textContent = `Env ${index}`;
+                });
+                updateNumEnvsDisplay();
+            } else {
+                showToast('At least one environment is required.', 'warning');
+            }
+        }
+        
+        function updateNumEnvsDisplay() {
+            const container = document.getElementById('carlaEnvList');
+            const count = container.querySelectorAll('.carla-env-item').length;
+            document.getElementById('numEnvsDisplay').textContent = count;
+        }
+
+        function toggleMaxRouteLength() {
+            const checkbox = document.getElementById('enableMaxRouteLength');
+            const inputDiv = document.getElementById('maxRouteLengthInput');
+            inputDiv.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        function addHistoryIndex(containerId, updatePreview = false) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `
+                <input type="number" value="0"${updatePreview ? ' onchange="updateBEVPreview()"' : ''}>
+                <button class="btn btn-danger" onclick="removeHistoryIndex(this)${updatePreview ? '; updateBEVPreview()' : ''}">x</button>
+            `;
+            container.appendChild(item);
+            if (updatePreview) updateBEVPreview();
+        }
+
+        function addBEVHistoryIndex() {
+            addHistoryIndex('bevHistoryIndex', true);
+        }
+
+        function addScalarHistoryIndex() {
+            addHistoryIndex('scalarHistoryIndex');
+        }
+        function updateColorPickerVisibility() {
+            const bevType = document.getElementById('bevType').value;
+            const isBevImage = (bevType === 'bev_image');
+            const isVector = (bevType === 'vector');
+            const backgroundRow = document.getElementById('backgroundColorRow');
+            if (backgroundRow) backgroundRow.style.display = isBevImage ? 'flex' : 'none';
+            const polygonSection = document.getElementById('polygonConfigSection');
+            const laneStyleSection = document.getElementById('laneStyleSection');
+            if (polygonSection) polygonSection.style.display = isVector ? 'block' : 'none';
+            if (laneStyleSection) laneStyleSection.style.display = isVector ? 'none' : 'block';
+            const bgIndicator = document.getElementById('indicatorBackground');
+            const bgPicker = document.getElementById('colorBackground');
+            
+            if (bgIndicator && bgPicker) {
+                bgIndicator.style.display = 'none';
+                bgPicker.style.display = 'inline-block';
+            }
+            const elements = [
+                { show: 'showRoad', indicator: 'indicatorRoad', picker: 'colorRoad' },
+                { show: 'showEgo', indicator: 'indicatorEgo', picker: 'colorEgo' },
+                { show: 'showNavigation', indicator: 'indicatorNavigation', picker: 'colorNavigation' },
+                { show: 'showVehicles', indicator: 'indicatorVehicles', picker: 'colorVehicles' },
+                { show: 'showEmergency', indicator: 'indicatorEmergency', picker: 'colorEmergency' },
+                { show: 'showPedestrians', indicator: 'indicatorPedestrians', picker: 'colorPedestrians' },
+                { show: 'showRedLight', indicator: 'indicatorRedLight', picker: 'colorRedLight' },
+                { show: 'showGreenLight', indicator: 'indicatorGreenLight', picker: 'colorGreenLight' },
+                { show: 'showYellowLight', indicator: 'indicatorYellowLight', picker: 'colorYellowLight' },
+                { show: 'showObstacles', indicator: 'indicatorObstacles', picker: 'colorObstacles' },
+                { show: 'showLanes', indicator: 'indicatorLanes', picker: 'colorLanes' },
+                { show: 'showStopSigns', indicator: 'indicatorStopSigns', picker: 'colorStopSigns' }
+            ];
+            
+            elements.forEach(el => {
+                const showCheckbox = document.getElementById(el.show);
+                const indicator = document.getElementById(el.indicator);
+                const picker = document.getElementById(el.picker);
+                
+                if (indicator && picker) {
+                    if (isBevImage && showCheckbox && showCheckbox.checked) {
+                        indicator.style.display = 'none';
+                        picker.style.display = 'inline-block';
+                    } else {
+                        indicator.style.display = 'inline-block';
+                        picker.style.display = 'none';
+                    }
+                }
+            });
+        }
+        function updateBEVPreview() {
+            const bevType = document.getElementById('bevType').value;
+            const bevSection = document.getElementById('bevConfigSection');
+            
+            if (bevType === 'none') {
+                bevSection.style.display = 'none';
+                return;
+            } else {
+                bevSection.style.display = 'block';
+            }
+
+            const canvas = document.getElementById('bevCanvas');
+            const ctx = canvas.getContext('2d');
+            const maskWidth = parseFloat(document.getElementById('maskWidth').value) || 64;
+            const egoToBottom = parseFloat(document.getElementById('egoToBottom').value) || 32;
+            const pixelsPerMeter = parseFloat(document.getElementById('pixelsPerMeter').value) || 6;
+            const actualSize = Math.round(maskWidth * pixelsPerMeter);
+            const canvasSize = Math.min(Math.max(actualSize, 560), 720);
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+            document.getElementById('resolutionInfo').textContent = 
+                `Config size: ${actualSize}x${actualSize}, preview: ${canvasSize}x${canvasSize}`;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const scale = width / maskWidth;
+            const bgColor = (bevType === 'bev_image') ? document.getElementById('colorBackground').value : '#2c2c2c';
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, width, height);
+            const historyInputs = document.querySelectorAll('#bevHistoryIndex input[type="number"]');
+            const historyIndices = Array.from(historyInputs).map(input => parseInt(input.value)).sort((a, b) => a - b);
+            const isVectorMode = (bevType === 'vector');
+            const drawStaticLayers = isVectorMode ? drawVectorStaticLayers : drawBEVStaticLayers;
+            const drawDynamicFrame = isVectorMode ? drawVectorDynamicFrame : drawBEVDynamicFrame;
+            drawStaticLayers(ctx, width, height, scale, egoToBottom);
+            if (historyIndices.length > 0) {
+                historyIndices.forEach((index, idx) => {
+                    const isCurrentFrame = (idx === historyIndices.length - 1);
+                    const minIndex = Math.min(...historyIndices);
+                    const maxIndex = Math.max(...historyIndices);
+                    const range = maxIndex - minIndex || 1;
+                    const normalizedPosition = (index - minIndex) / range;
+                    const opacity = 0.2 + normalizedPosition * 0.8;
+                    drawDynamicFrame(ctx, width, height, scale, egoToBottom, opacity, isCurrentFrame, index);
+                });
+            } else {
+                drawDynamicFrame(ctx, width, height, scale, egoToBottom, 1.0, true, 0);
+            }
+            drawGrid(ctx, width, height, scale, maskWidth, egoToBottom);
+        }
+        function drawBEVStaticLayers(ctx, width, height, scale, egoToBottom) {
+            const egoY = height - egoToBottom * scale;
+            const egoX = width / 2;
+            
+            const bevType = document.getElementById('bevType').value;
+            const useCustomColors = (bevType === 'bev_image');
+            
+            const colors = {
+                road: useCustomColors ? document.getElementById('colorRoad').value : '#2E3436',
+                lanes: useCustomColors ? document.getElementById('colorLanes').value : '#808080',
+                navigation: useCustomColors ? document.getElementById('colorNavigation').value : '#808080'
+            };
+            
+            function hexToRgba(hex, alpha) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+            
+            const showRoad = document.getElementById('showRoad').checked;
+            const showLanes = document.getElementById('showLanes').checked;
+            const showNavigation = document.getElementById('showNavigation').checked;
+            
+            const laneWidth = 2.5 * scale;
+            const roadCenterX = egoX - laneWidth * 0.5;
+            const junctionDistance = 8 * scale;
+            const junctionY = egoY - junctionDistance;
+            const laneStyle = document.querySelector('input[name="laneStyle"]:checked')?.value || 'unified';
+            if (showRoad) {
+                ctx.fillStyle = hexToRgba(colors.road, 1);
+                ctx.fillRect(roadCenterX - laneWidth * 2, 0, laneWidth * 4, height);
+                ctx.fillRect(0, junctionY - laneWidth * 2, width, laneWidth * 4);
+            }
+            if (showNavigation) {
+                ctx.fillStyle = hexToRgba(colors.navigation, 0.3);
+                const navLaneWidth = laneWidth * 1;
+                ctx.fillRect(egoX - navLaneWidth/2, 0, navLaneWidth, egoY + 1.5 * scale);
+            }
+            if (showLanes) {
+                if (laneStyle === 'split') {
+                    ctx.strokeStyle = hexToRgba(colors.lanes, 0.9);
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX - laneWidth * 2, 0);
+                    ctx.lineTo(roadCenterX - laneWidth * 2, height);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + laneWidth * 2, 0);
+                    ctx.lineTo(roadCenterX + laneWidth * 2, height);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, junctionY - laneWidth * 2);
+                    ctx.lineTo(width, junctionY - laneWidth * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, junctionY + laneWidth * 2);
+                    ctx.lineTo(width, junctionY + laneWidth * 2);
+                    ctx.stroke();
+                    ctx.strokeStyle = 'rgba(255, 215, 0, 0.9)';
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX - 0.15 * scale, 0);
+                    ctx.lineTo(roadCenterX - 0.15 * scale, junctionY - laneWidth * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX - 0.15 * scale, junctionY + laneWidth * 2);
+                    ctx.lineTo(roadCenterX - 0.15 * scale, height);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + 0.15 * scale, 0);
+                    ctx.lineTo(roadCenterX + 0.15 * scale, junctionY - laneWidth * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + 0.15 * scale, junctionY + laneWidth * 2);
+                    ctx.lineTo(roadCenterX + 0.15 * scale, height);
+                    ctx.stroke();
+                    ctx.strokeStyle = hexToRgba(colors.lanes, 0.7);
+                    ctx.setLineDash([10, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX - laneWidth, 0);
+                    ctx.lineTo(roadCenterX - laneWidth, junctionY - laneWidth * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX - laneWidth, junctionY + laneWidth * 2);
+                    ctx.lineTo(roadCenterX - laneWidth, height);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + laneWidth, 0);
+                    ctx.lineTo(roadCenterX + laneWidth, junctionY - laneWidth * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + laneWidth, junctionY + laneWidth * 2);
+                    ctx.lineTo(roadCenterX + laneWidth, height);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                } else {
+                    ctx.strokeStyle = hexToRgba(colors.lanes, 0.8);
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX - laneWidth * 2, 0);
+                    ctx.lineTo(roadCenterX - laneWidth * 2, height);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + laneWidth * 2, 0);
+                    ctx.lineTo(roadCenterX + laneWidth * 2, height);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX, 0);
+                    ctx.lineTo(roadCenterX, junctionY - laneWidth * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX, junctionY + laneWidth * 2);
+                    ctx.lineTo(roadCenterX, height);
+                    ctx.stroke();
+                    ctx.setLineDash([10, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX - laneWidth, 0);
+                    ctx.lineTo(roadCenterX - laneWidth, junctionY - laneWidth * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX - laneWidth, junctionY + laneWidth * 2);
+                    ctx.lineTo(roadCenterX - laneWidth, height);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + laneWidth, 0);
+                    ctx.lineTo(roadCenterX + laneWidth, junctionY - laneWidth * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + laneWidth, junctionY + laneWidth * 2);
+                    ctx.lineTo(roadCenterX + laneWidth, height);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(0, junctionY - laneWidth * 2);
+                    ctx.lineTo(width, junctionY - laneWidth * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, junctionY + laneWidth * 2);
+                    ctx.lineTo(width, junctionY + laneWidth * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, junctionY);
+                    ctx.lineTo(roadCenterX - laneWidth * 2, junctionY);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + laneWidth * 2, junctionY);
+                    ctx.lineTo(width, junctionY);
+                    ctx.stroke();
+                    
+                    ctx.setLineDash([10, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(0, junctionY - laneWidth);
+                    ctx.lineTo(roadCenterX - laneWidth * 2, junctionY - laneWidth);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + laneWidth * 2, junctionY - laneWidth);
+                    ctx.lineTo(width, junctionY - laneWidth);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, junctionY + laneWidth);
+                    ctx.lineTo(roadCenterX - laneWidth * 2, junctionY + laneWidth);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(roadCenterX + laneWidth * 2, junctionY + laneWidth);
+                    ctx.lineTo(width, junctionY + laneWidth);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+        }
+        function drawBEVDynamicFrame(ctx, width, height, scale, egoToBottom, opacity, isCurrentFrame, frameIndex) {
+            const egoY = height - egoToBottom * scale;
+            const egoX = width / 2;
+            
+            const bevType = document.getElementById('bevType').value;
+            const useCustomColors = (bevType === 'bev_image');
+            
+            const colors = {
+                ego: useCustomColors ? document.getElementById('colorEgo').value : '#FFFFFF',
+                vehicles: useCustomColors ? document.getElementById('colorVehicles').value : '#4A90E2',
+                emergency: useCustomColors ? document.getElementById('colorEmergency').value : '#E74C3C',
+                pedestrians: useCustomColors ? document.getElementById('colorPedestrians').value : '#87CEEB',
+                obstacles: useCustomColors ? document.getElementById('colorObstacles').value : '#8B0000',
+                redLight: useCustomColors ? document.getElementById('colorRedLight').value : '#FF0000',
+                yellowLight: useCustomColors ? document.getElementById('colorYellowLight').value : '#FFD700',
+                greenLight: useCustomColors ? document.getElementById('colorGreenLight').value : '#00FF00',
+                stopSigns: useCustomColors ? document.getElementById('colorStopSigns').value : '#A0A000'
+            };
+            
+            function hexToRgba(hex, alpha) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+            const showEgo = document.getElementById('showEgo').checked;
+            const egoMultiFrame = document.getElementById('egoMultiFrame')?.checked || false;
+            const showVehicles = document.getElementById('showVehicles').checked;
+            const vehiclesMultiFrame = document.getElementById('vehiclesMultiFrame').checked;
+            const showEmergency = document.getElementById('showEmergency').checked;
+            const emergencyMultiFrame = document.getElementById('emergencyMultiFrame').checked;
+            const showPedestrians = document.getElementById('showPedestrians').checked;
+            const pedestriansMultiFrame = document.getElementById('pedestriansMultiFrame').checked;
+            const showObstacles = document.getElementById('showObstacles').checked;
+            const obstaclesMultiFrame = document.getElementById('obstaclesMultiFrame').checked;
+            const showRedLight = document.getElementById('showRedLight').checked;
+            const redLightMultiFrame = document.getElementById('redLightMultiFrame').checked;
+            const showYellowLight = document.getElementById('showYellowLight').checked;
+            const yellowLightMultiFrame = document.getElementById('yellowLightMultiFrame').checked;
+            const showGreenLight = document.getElementById('showGreenLight').checked;
+            const greenLightMultiFrame = document.getElementById('greenLightMultiFrame').checked;
+            const showStopSigns = document.getElementById('showStopSigns').checked;
+            const stopSignsMultiFrame = document.getElementById('stopSignsMultiFrame').checked;
+            
+            const laneWidth = 2.5 * scale;
+            const roadCenterX = egoX - laneWidth * 0.5;
+            const junctionDistance = 8 * scale;
+            const junctionY = egoY - junctionDistance;
+            
+            const frequency = parseFloat(document.getElementById('envFrequency').value) || 10;
+            const vehicleSpeed = 4;
+            const timePerFrame = 1 / frequency;
+            const historyOffset = isCurrentFrame ? 0 : Math.abs(frameIndex) * vehicleSpeed * timePerFrame * scale;
+            if (showVehicles && (vehiclesMultiFrame || isCurrentFrame)) {
+                drawRectangle(ctx, roadCenterX + laneWidth * 0.5, egoY - 10 * scale + historyOffset, 
+                    1.5 * scale, 3 * scale, hexToRgba(colors.vehicles, opacity));
+                drawRectangle(ctx, roadCenterX + laneWidth * 0.5, egoY - 25 * scale + historyOffset, 
+                    1.5 * scale, 3 * scale, hexToRgba(colors.vehicles, opacity));
+                drawRectangle(ctx, roadCenterX - laneWidth * 0.5, egoY - 20 * scale - historyOffset, 
+                    1.5 * scale, 3 * scale, hexToRgba(colors.vehicles, opacity));
+                drawRectangle(ctx, roadCenterX - laneWidth * 0.5, egoY - 28 * scale - historyOffset, 
+                    1.5 * scale, 3 * scale, hexToRgba(colors.vehicles, opacity));
+                drawRectangle(ctx, roadCenterX - 15 * scale + historyOffset, junctionY - laneWidth * 0.5, 
+                    3 * scale, 1.5 * scale, hexToRgba(colors.vehicles, opacity));
+                drawRectangle(ctx, roadCenterX + 15 * scale - historyOffset, junctionY + laneWidth * 0.5, 
+                    3 * scale, 1.5 * scale, hexToRgba(colors.vehicles, opacity));
+            }
+            if (showEmergency && (emergencyMultiFrame || isCurrentFrame)) {
+                drawRectangle(ctx, roadCenterX - laneWidth * 0.5, egoY - 18 * scale - historyOffset * 1.2, 
+                    2 * scale, 5 * scale, hexToRgba(colors.emergency, opacity));
+            }
+            if (showPedestrians && (pedestriansMultiFrame || isCurrentFrame)) {
+                const pedOffset = historyOffset * 0.3;
+                drawRectangle(ctx, roadCenterX - laneWidth * 2.1, egoY - 8 * scale + pedOffset, 
+                    0.5 * scale, 0.5 * scale, hexToRgba(colors.pedestrians, opacity));
+                drawRectangle(ctx, roadCenterX + laneWidth * 2.1, egoY - 15 * scale + pedOffset, 
+                    0.5 * scale, 0.5 * scale, hexToRgba(colors.pedestrians, opacity));
+                drawRectangle(ctx, roadCenterX - laneWidth * 2.1, junctionY - laneWidth * 2.1, 
+                    0.5 * scale, 0.5 * scale, hexToRgba(colors.pedestrians, opacity));
+            }
+            if (showObstacles && (obstaclesMultiFrame || isCurrentFrame)) {
+                drawRectangle(ctx, roadCenterX + laneWidth * 2.2, egoY + 3 * scale, 
+                    0.5 * scale, 2 * scale, hexToRgba(colors.obstacles, opacity));
+                drawRectangle(ctx, roadCenterX - laneWidth * 2.2, junctionY - laneWidth * 4, 
+                    0.5 * scale, 2 * scale, hexToRgba(colors.obstacles, opacity));
+            }
+            const stopLineThickness = 0.3 * scale;
+            if (showRedLight && (redLightMultiFrame || isCurrentFrame)) {
+                const egoStopLineY = junctionY + laneWidth * 2;
+                drawRectangle(ctx, roadCenterX + laneWidth * 0.5, egoStopLineY, 
+                    laneWidth * 1, stopLineThickness, hexToRgba(colors.redLight, opacity));
+            }
+            if (showYellowLight && (yellowLightMultiFrame || isCurrentFrame)) {
+                const westStopLineX = roadCenterX - laneWidth * 2;
+                drawRectangle(ctx, westStopLineX, junctionY + laneWidth * 0.5, 
+                    stopLineThickness, laneWidth * 1, hexToRgba(colors.yellowLight, opacity));
+            }
+            if (showGreenLight && (greenLightMultiFrame || isCurrentFrame)) {
+                const eastStopLineX = roadCenterX + laneWidth * 2;
+                drawRectangle(ctx, eastStopLineX, junctionY - laneWidth * 0.5, 
+                    stopLineThickness, laneWidth * 1, hexToRgba(colors.greenLight, opacity));
+            }
+            if (showStopSigns && (stopSignsMultiFrame || isCurrentFrame)) {
+                const stopSignThickness = 0.4 * scale;
+                const stopSignY = junctionY + laneWidth * 2;
+                drawRectangle(ctx, roadCenterX - laneWidth * 0.5, stopSignY, 
+                    laneWidth * 1, stopSignThickness, hexToRgba(colors.stopSigns, opacity));
+            }
+            if (showEgo && !isCurrentFrame && egoMultiFrame) {
+                drawRectangle(ctx, egoX, egoY + historyOffset, 1.5 * scale, 3 * scale, hexToRgba(colors.ego, opacity));
+            } else if (showEgo && isCurrentFrame) {
+                drawRectangle(ctx, egoX, egoY, 1.5 * scale, 3 * scale, hexToRgba(colors.ego, 1));
+                const arrowSize = 0.6 * scale;
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+                ctx.beginPath();
+                ctx.moveTo(egoX, egoY - arrowSize);
+                ctx.lineTo(egoX - arrowSize * 0.4, egoY + arrowSize * 0.3);
+                ctx.lineTo(egoX - arrowSize * 0.15, egoY + arrowSize * 0.3);
+                ctx.lineTo(egoX - arrowSize * 0.15, egoY + arrowSize);
+                ctx.lineTo(egoX + arrowSize * 0.15, egoY + arrowSize);
+                ctx.lineTo(egoX + arrowSize * 0.15, egoY + arrowSize * 0.3);
+                ctx.lineTo(egoX + arrowSize * 0.4, egoY + arrowSize * 0.3);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+        function drawVectorStaticLayers(ctx, width, height, scale, egoToBottom) {
+            const egoY = height - egoToBottom * scale;
+            const egoX = width / 2;
+            
+            const colors = { lanes: '#808080', navigation: '#808080' };
+            
+            function hexToRgba(hex, alpha) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+            
+            const showLanes = document.getElementById('showLanes').checked;
+            const showNavigation = document.getElementById('showNavigation').checked;
+            
+            const laneWidth = 2.5 * scale;
+            const roadCenterX = egoX - laneWidth * 0.5;
+            const junctionDistance = 8 * scale;
+            const junctionY = egoY - junctionDistance;
+            
+            const navPointDensity = parseFloat(document.getElementById('navPointDensity').value) || 0.5;
+            const navPathLength = parseFloat(document.getElementById('navPathLength').value) || 30;
+            const lanePointDensity = parseFloat(document.getElementById('lanePointDensity').value) || 1;
+            const pointSize = parseFloat(document.getElementById('pointSize').value) || 3;
+            if (showNavigation) {
+                const navPoints = [];
+                const numPoints = Math.floor(navPathLength * navPointDensity);
+                const pointSpacing = (navPathLength * scale) / numPoints;
+                for (let i = 0; i < numPoints; i++) {
+                    navPoints.push({ x: egoX, y: egoY - i * pointSpacing });
+                }
+                drawPointList(ctx, navPoints, pointSize, hexToRgba(colors.navigation, 0.8));
+            }
+            if (showLanes) {
+                const lanePoints = [];
+                const pointSpacing = 1 / lanePointDensity * scale;
+                const verticalLines = [
+                    roadCenterX - laneWidth * 2, roadCenterX - laneWidth, roadCenterX,
+                    roadCenterX + laneWidth, roadCenterX + laneWidth * 2
+                ];
+                verticalLines.forEach(x => {
+                    for (let y = 0; y < height; y += pointSpacing) {
+                        if (y > junctionY - laneWidth * 2 && y < junctionY + laneWidth * 2) continue;
+                        lanePoints.push({ x: x, y: y });
+                    }
+                });
+                const horizontalLines = [
+                    junctionY - laneWidth * 2, junctionY - laneWidth, junctionY,
+                    junctionY + laneWidth, junctionY + laneWidth * 2
+                ];
+                horizontalLines.forEach(y => {
+                    for (let x = 0; x < width; x += pointSpacing) {
+                        if (x > roadCenterX - laneWidth * 2 && x < roadCenterX + laneWidth * 2) continue;
+                        lanePoints.push({ x: x, y: y });
+                    }
+                });
+                drawPointList(ctx, lanePoints, pointSize * 0.7, hexToRgba(colors.lanes, 0.7));
+            }
+        }
+        function drawVectorDynamicFrame(ctx, width, height, scale, egoToBottom, opacity, isCurrentFrame, frameIndex) {
+            const egoY = height - egoToBottom * scale;
+            const egoX = width / 2;
+            
+            const colors = {
+                ego: '#FFFFFF', vehicles: '#4A90E2', emergency: '#E74C3C',
+                pedestrians: '#87CEEB', obstacles: '#8B0000', redLight: '#FF0000',
+                yellowLight: '#FFD700', greenLight: '#00FF00', stopSigns: '#A0A000'
+            };
+            
+            function hexToRgba(hex, alpha) {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+            
+            const showEgo = document.getElementById('showEgo').checked;
+            const egoMultiFrame = document.getElementById('egoMultiFrame')?.checked || false;
+            const showVehicles = document.getElementById('showVehicles').checked;
+            const vehiclesMultiFrame = document.getElementById('vehiclesMultiFrame').checked;
+            const showEmergency = document.getElementById('showEmergency').checked;
+            const emergencyMultiFrame = document.getElementById('emergencyMultiFrame').checked;
+            const showPedestrians = document.getElementById('showPedestrians').checked;
+            const pedestriansMultiFrame = document.getElementById('pedestriansMultiFrame').checked;
+            const showObstacles = document.getElementById('showObstacles').checked;
+            const obstaclesMultiFrame = document.getElementById('obstaclesMultiFrame').checked;
+            const showRedLight = document.getElementById('showRedLight').checked;
+            const redLightMultiFrame = document.getElementById('redLightMultiFrame').checked;
+            const showYellowLight = document.getElementById('showYellowLight').checked;
+            const yellowLightMultiFrame = document.getElementById('yellowLightMultiFrame').checked;
+            const showGreenLight = document.getElementById('showGreenLight').checked;
+            const greenLightMultiFrame = document.getElementById('greenLightMultiFrame').checked;
+            const showStopSigns = document.getElementById('showStopSigns').checked;
+            const stopSignsMultiFrame = document.getElementById('stopSignsMultiFrame').checked;
+            
+            const pointSize = parseFloat(document.getElementById('pointSize').value) || 3;
+            const laneWidth = 2.5 * scale;
+            const roadCenterX = egoX - laneWidth * 0.5;
+            const junctionDistance = 8 * scale;
+            const junctionY = egoY - junctionDistance;
+            
+            const frequency = parseFloat(document.getElementById('envFrequency').value) || 10;
+            const vehicleSpeed = 4;
+            const timePerFrame = 1 / frequency;
+            const historyOffset = isCurrentFrame ? 0 : Math.abs(frameIndex) * vehicleSpeed * timePerFrame * scale;
+            if (showVehicles && (vehiclesMultiFrame || isCurrentFrame)) {
+                const vehicleW = 1.5 * scale, vehicleH = 3 * scale;
+                drawObjectPoint(ctx, roadCenterX + laneWidth * 0.5, egoY - 10 * scale + historyOffset, 
+                    vehicleW, vehicleH, pointSize, hexToRgba(colors.vehicles, opacity), opacity);
+                drawObjectPoint(ctx, roadCenterX + laneWidth * 0.5, egoY - 25 * scale + historyOffset, 
+                    vehicleW, vehicleH, pointSize, hexToRgba(colors.vehicles, opacity), opacity);
+                drawObjectPoint(ctx, roadCenterX - laneWidth * 0.5, egoY - 20 * scale - historyOffset, 
+                    vehicleW, vehicleH, pointSize, hexToRgba(colors.vehicles, opacity), opacity);
+                drawObjectPoint(ctx, roadCenterX - laneWidth * 0.5, egoY - 28 * scale - historyOffset, 
+                    vehicleW, vehicleH, pointSize, hexToRgba(colors.vehicles, opacity), opacity);
+                drawObjectPoint(ctx, roadCenterX - 15 * scale + historyOffset, junctionY - laneWidth * 0.5, 
+                    vehicleH, vehicleW, pointSize, hexToRgba(colors.vehicles, opacity), opacity);
+                drawObjectPoint(ctx, roadCenterX + 15 * scale - historyOffset, junctionY + laneWidth * 0.5, 
+                    vehicleH, vehicleW, pointSize, hexToRgba(colors.vehicles, opacity), opacity);
+            }
+            if (showEmergency && (emergencyMultiFrame || isCurrentFrame)) {
+                drawObjectPoint(ctx, roadCenterX - laneWidth * 0.5, egoY - 18 * scale - historyOffset * 1.2, 
+                    2 * scale, 5 * scale, pointSize * 1.5, hexToRgba(colors.emergency, opacity), opacity);
+            }
+            if (showPedestrians && (pedestriansMultiFrame || isCurrentFrame)) {
+                const pedSize = 0.5 * scale;
+                const pedOffset = historyOffset * 0.3;
+                drawObjectPoint(ctx, roadCenterX - laneWidth * 2.1, egoY - 8 * scale + pedOffset, 
+                    pedSize, pedSize, pointSize * 0.8, hexToRgba(colors.pedestrians, opacity), opacity);
+                drawObjectPoint(ctx, roadCenterX + laneWidth * 2.1, egoY - 15 * scale + pedOffset, 
+                    pedSize, pedSize, pointSize * 0.8, hexToRgba(colors.pedestrians, opacity), opacity);
+                drawObjectPoint(ctx, roadCenterX - laneWidth * 2.1, junctionY - laneWidth * 2.1, 
+                    pedSize, pedSize, pointSize * 0.8, hexToRgba(colors.pedestrians, opacity), opacity);
+            }
+            if (showObstacles && (obstaclesMultiFrame || isCurrentFrame)) {
+                drawObjectPoint(ctx, roadCenterX + laneWidth * 2.2, egoY + 3 * scale, 
+                    0.5 * scale, 2 * scale, pointSize, hexToRgba(colors.obstacles, opacity), opacity);
+                drawObjectPoint(ctx, roadCenterX - laneWidth * 2.2, junctionY - laneWidth * 4, 
+                    0.5 * scale, 2 * scale, pointSize, hexToRgba(colors.obstacles, opacity), opacity);
+            }
+            if (showRedLight && (redLightMultiFrame || isCurrentFrame)) {
+                drawPoint(ctx, roadCenterX + laneWidth * 0.5, junctionY + laneWidth * 2, pointSize * 1.2, hexToRgba(colors.redLight, opacity));
+            }
+            if (showYellowLight && (yellowLightMultiFrame || isCurrentFrame)) {
+                drawPoint(ctx, roadCenterX - laneWidth * 2, junctionY + laneWidth * 0.5, pointSize * 1.2, hexToRgba(colors.yellowLight, opacity));
+            }
+            if (showGreenLight && (greenLightMultiFrame || isCurrentFrame)) {
+                drawPoint(ctx, roadCenterX + laneWidth * 2, junctionY - laneWidth * 0.5, pointSize * 1.2, hexToRgba(colors.greenLight, opacity));
+            }
+            if (showStopSigns && (stopSignsMultiFrame || isCurrentFrame)) {
+                drawPoint(ctx, roadCenterX - laneWidth * 0.5, junctionY + laneWidth * 2, pointSize * 1.2, hexToRgba(colors.stopSigns, opacity));
+            }
+            if (showEgo && !isCurrentFrame && egoMultiFrame) {
+                drawObjectPoint(ctx, egoX, egoY + historyOffset, 
+                    1.5 * scale, 3 * scale, pointSize * 1.5, hexToRgba(colors.ego, opacity), opacity);
+            } else if (showEgo && isCurrentFrame) {
+                drawObjectPoint(ctx, egoX, egoY, 
+                    1.5 * scale, 3 * scale, pointSize * 1.5, hexToRgba(colors.ego, 1), 1);
+                const arrowSize = 0.6 * scale;
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+                ctx.beginPath();
+                ctx.moveTo(egoX, egoY - arrowSize);
+                ctx.lineTo(egoX - arrowSize * 0.3, egoY - arrowSize * 0.3);
+                ctx.lineTo(egoX + arrowSize * 0.3, egoY - arrowSize * 0.3);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+        function drawRectangle(ctx, centerX, centerY, width, height, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(centerX - width/2, centerY - height/2, width, height);
+            const alpha = color.match(/[\d.]+(?=\))/g);
+            const opacity = alpha ? parseFloat(alpha[alpha.length - 1]) : 1;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.5})`;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(centerX - width/2, centerY - height/2, width, height);
+        }
+        function drawPoint(ctx, x, y, radius, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        function drawObjectPoint(ctx, centerX, centerY, objWidth, objHeight, pointRadius, color, opacity) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, pointRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = opacity;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - objHeight / 2);
+            ctx.lineTo(centerX, centerY + objHeight / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(centerX - objWidth / 2, centerY);
+            ctx.lineTo(centerX + objWidth / 2, centerY);
+            ctx.stroke();
+            
+            ctx.globalAlpha = 1;
+        }
+        function drawPointList(ctx, points, pointRadius, color) {
+            ctx.fillStyle = color;
+            points.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, pointRadius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        function drawGrid(ctx, width, height, scale, maskWidth, egoToBottom) {
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+            for (let i = 0; i <= maskWidth; i += 5) {
+                const x = (i / maskWidth) * width;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            const totalHeight = maskWidth;
+            for (let i = 0; i <= totalHeight; i += 5) {
+                const y = height - (i / totalHeight) * height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            ctx.setLineDash([]);
+            ctx.fillStyle = 'rgba(200, 200, 200, 0.8)';
+            ctx.font = '11px Arial';
+            ctx.fillText('0m', 5, height - 5);
+            ctx.fillText(`${maskWidth/2}m`, width/2 - 15, height - 5);
+            ctx.fillText(`${maskWidth}m`, width - 35, height - 5);
+        }
+        function addScalarObservation() {
+            const select = document.getElementById('scalarTypeSelect');
+            const type = select.value;
+            if (!type) {
+                showToast('Select an observation type to add.', 'warning');
+                return;
+            }
+
+            const container = document.getElementById('scalarObservations');
+            const id = `scalar-${scalarObsCounter++}`;
+            
+            const typeNames = {
+                'speed': 'Speed',
+                'throttle': 'Throttle',
+                'brake': 'Brake',
+                'steer': 'Steer',
+                'reverse': 'Reverse',
+                'gear': 'Gear',
+                'location': 'Location'
+            };
+
+            const item = document.createElement('div');
+            item.className = 'scalar-item';
+            item.id = id;
+            item.setAttribute('data-type', type);
+            item.innerHTML = `
+                <span style="font-weight: 500; flex: 1;">${typeNames[type]}</span>
+                <label style="display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" checked>
+                    <span style="font-size: 13px;">History</span>
+                </label>
+                <label class="scalar-normalize">
+                    Normalization Divisor
+                    <input type="number" class="scalar-normalize-by" value="1" min="0.000001" step="any">
+                </label>
+                <button class="btn btn-danger" onclick="removeScalarObservation('${id}')">Remove</button>
+            `;
+            container.appendChild(item);
+            
+            select.value = '';
+        }
+        function removeScalarObservation(id) {
+            document.getElementById(id).remove();
+        }
+
+        function previewConfig() {
+            try {
+                const config = collectConfig();
+                const yamlStr = jsyaml.dump(config, {
+                    indent: 2,
+                    lineWidth: -1,
+                    noRefs: true,
+                    sortKeys: false
+                });
+                const preview = document.getElementById('configPreview');
+                preview.textContent = yamlStr;
+                preview.style.display = 'block';
+                updatePresetSummary(config);
+            } catch (error) {
+                showToast('Unable to generate preview: ' + error.message, 'error');
+            }
+        }
+
+        function importYAML(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const config = jsyaml.load(e.target.result);
+                    loadConfigToUI(config, { sourceLabel: file.name });
+                    showToast('YAML file imported.', 'success');
+                } catch (error) {
+                    showToast('Failed to parse YAML file: ' + error.message, 'error');
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+        function importFromPaste() {
+            const yamlContent = document.getElementById('pasteYamlArea').value.trim();
+            if (!yamlContent) {
+                showToast('Paste YAML content first.', 'warning');
+                return;
+            }
+            
+            try {
+                const config = jsyaml.load(yamlContent);
+                loadConfigToUI(config, { sourceLabel: 'Pasted YAML' });
+                showToast('Config imported.', 'success');
+                document.getElementById('pasteYamlArea').value = '';
+            } catch (error) {
+                showToast('Failed to parse YAML: ' + error.message, 'error');
+            }
+        }
+
+        function deepClone(value) {
+            return JSON.parse(JSON.stringify(value));
+        }
+
+        function readNumber(id, fallback, integer = false) {
+            const el = document.getElementById(id);
+            if (!el) return fallback;
+            const value = integer ? parseInt(el.value) : parseFloat(el.value);
+            return Number.isFinite(value) ? value : fallback;
+        }
+
+        function setInputValue(id, value) {
+            const el = document.getElementById(id);
+            if (el && value !== undefined && value !== null) el.value = value;
+        }
+
+        function setChecked(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.checked = value === true;
+        }
+
+        function repeatValue(value, count) {
+            return Array.from({ length: count }, () => value);
+        }
+
+        function rangeValues(start, count, step = 1) {
+            return Array.from({ length: count }, (_, i) => start + i * step);
+        }
+
+        function offPolicyPorts(first, start, end) {
+            return [first].concat(rangeValues(start, Math.floor((end - start) / 10) + 1, 10));
+        }
+
+        const DISCRETE_ACTIONS_16 = [
+            [0.0, 0.0, 1.0],
+            [0.7, -0.3, 0.0],
+            [0.7, -0.1, 0.0],
+            [0.7, 0.0, 0.0],
+            [0.7, 0.1, 0.0],
+            [0.7, 0.3, 0.0],
+            [0.3, -0.7, 0.0],
+            [0.3, -0.3, 0.0],
+            [0.3, 0.0, 0.0],
+            [0.3, 0.3, 0.0],
+            [0.3, 0.7, 0.0],
+            [0.0, -1.0, 0.0],
+            [0.0, -0.3, 0.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.3, 0.0],
+            [0.0, 1.0, 0.0]
+        ];
+
+        const COMMON_TERMINATION = {
+            success_percent_threshold: 99.9,
+            off_road_threshold: 1.5,
+            blocked_time_out_limit: 180.0,
+            second_red_light_distance_threshold: 20.0,
+            second_red_light_clear_distance: 30.0,
+            second_red_stop_speed_threshold: 0.2
+        };
+
+        const ENV_INFOS = {
+            env_id: 0,
+            current_step: 0,
+            crash: false,
+            crash_message: '',
+            entry_status: '',
+            route_id: '',
+            route_num: 0,
+            log: false,
+            blocked_by_obstacles: false,
+            town: ''
+        };
+
+        const ON_POLICY_TERMINATE_EVENTS = [
+            'COLLISION_PEDESTRIAN',
+            'COLLISION_VEHICLE',
+            'COLLISION_STATIC',
+            'TRAFFIC_LIGHT_INFRACTION',
+            'STOP_INFRACTION',
+            'VEHICLE_BLOCKED',
+            'ROUTE_DEVIATION',
+            'USELESS_MOVE_TIMEOUT',
+            'NOT_IN_CARLANE',
+            'SECOND_RED_SAME_LIGHT'
+        ];
+
+        const OFF_POLICY_TERMINATE_EVENTS = ON_POLICY_TERMINATE_EVENTS.concat(['SUCCESS']);
+
+        function makeObservationConfig(obstaclesUseHistory) {
+            return {
+                vector: {
+                    enable: true,
+                    type: 'bev_mask',
+                    map_dir: 'resources/maps',
+                    mask_width: 64,
+                    pixels_per_meter: 2,
+                    ego_to_bottom: 32,
+                    lane_style: 'unified',
+                    elements: {
+                        navigation: { use_history: false },
+                        ego_vehicle: { use_history: false },
+                        vehicles: { use_history: true },
+                        emergency_vehicles: { use_history: true },
+                        pedestrians: { use_history: true },
+                        red_light: { use_history: false },
+                        green_light: { use_history: false },
+                        yellow_light: { use_history: false },
+                        obstacles: { use_history: obstaclesUseHistory },
+                        lanes: { use_history: false },
+                        stop_signs: { use_history: false }
+                    },
+                    history_index: [-16, -11, -6, -1]
+                },
+                scalars: {
+                    items: [
+                        { type: 'speed', use_history: true },
+                        { type: 'throttle', use_history: true },
+                        { type: 'brake', use_history: true }
+                    ],
+                    history_index: [-16, -11, -6, -1]
+                }
+            };
+        }
+
+        function makeOffPolicyCarla() {
+            return {
+                load_world_timeout: 600,
+                worker_ready_timeout: 600,
+                disable_watchdog: true,
+                num_envs: 24,
+                host: rangeValues(10, 24).map(i => `127.0.1.${i}`),
+                port: offPolicyPorts(4265, 4115, 4255).concat(rangeValues(4275, 8, 10)),
+                traffic_manager_port: offPolicyPorts(8465, 8315, 8455).concat(rangeValues(8475, 8, 10)),
+                traffic_manager_seed: repeatValue(0, 24),
+                gpu_id: Array.from({ length: 24 }, (_, i) => i % 2 === 0 ? 6 : 7),
+                frequency_hz: 10,
+                timeout: 120,
+                connection_timeout: 120,
+                server_wait_timeout: 120,
+                retry_interval: 2,
+                max_retries: 5,
+                quality_level: 'Low',
+                render_offscreen: true,
+                no_sound: true,
+                null_rhi: true,
+                no_steam: false,
+                opengl: false,
+                vulkan: false,
+                extra_args: '-RPCThreads=2 -StreamingThreads=2 -SecondaryThreads=2 -nothreading'
+            };
+        }
+
+        function makeOnPolicyCarla(hostThirdOctet, portBase, tmBase) {
+            return {
+                load_world_timeout: 400,
+                worker_ready_timeout: 1800,
+                disable_watchdog: true,
+                num_envs: 24,
+                host: rangeValues(135, 24).map(i => `127.0.${hostThirdOctet}.${i}`),
+                port: Array.from({ length: 24 }, (_, i) => portBase + Math.floor(i / 8) * 100 + (i % 8) * 10),
+                traffic_manager_port: Array.from({ length: 24 }, (_, i) => tmBase + (i % 8) * 100 + Math.floor(i / 8) * 10),
+                traffic_manager_seed: repeatValue(0, 24),
+                gpu_id: repeatValue(0, 24),
+                frequency_hz: 10,
+                timeout: 60,
+                connection_timeout: 30,
+                server_wait_timeout: 300,
+                retry_interval: 2,
+                max_retries: 5,
+                quality_level: 'Low',
+                render_offscreen: true,
+                no_sound: true,
+                null_rhi: true,
+                no_steam: false,
+                opengl: false,
+                vulkan: false,
+                extra_args: '-RPCThreads=2 -StreamingThreads=2 -SecondaryThreads=2 -nothreading'
+            };
+        }
+
+        function makeOffPolicyRoutes() {
+            return {
+                route_files: ['resources/routes/train_routes_demo.xml'],
+                sample_mode: 'adaptive',
+                adaptive: {
+                    window_size: 10,
+                    success_threshold: 100.0,
+                    low_success_rate: 0.5,
+                    high_success_rate: 0.8,
+                    low_success_weight: 2.0,
+                    high_success_weight: 0.75,
+                    warmup_min_samples: 8,
+                    log_interval_updates: 100,
+                    hard_scenarios: [
+                        'AccidentTwoWays',
+                        'ConstructionObstacleTwoWays',
+                        'CrossingBicycleFlow',
+                        'HazardAtSideLaneTwoWays',
+                        'OppositeVehicleTakingPriority',
+                        'VehicleTurningRoute',
+                        'YieldToEmergencyVehicle',
+                        'VehicleTurningRoutePedestrian'
+                    ],
+                    hard_scenario_max_gap_samples: 50
+                },
+                town_partition: {
+                    heavy_towns: [],
+                    heavy_ratio: 0
+                }
+            };
+        }
+
+        function makeOnPolicyRoutes() {
+            return {
+                route_files: ['resources/routes/train_routes_demo.xml'],
+                sample_mode: 'adaptive',
+                adaptive: {
+                    window_size: 10,
+                    success_threshold: 100.0,
+                    low_success_rate: 0.5,
+                    high_success_rate: 0.8,
+                    low_success_weight: 1.0,
+                    high_success_weight: 1.0,
+                    warmup_min_samples: 8,
+                    log_interval_updates: 100,
+                    hard_scenarios: [
+                        'Accident',
+                        'AccidentTwoWays',
+                        'BlockedIntersection',
+                        'ConstructionObstacleTwoWays',
+                        'CrossingBicycleFlow',
+                        'EnterActorFlow',
+                        'HazardAtSideLaneTwoWays',
+                        'NonSignalizedJunctionLeftTurnEnterFlow',
+                        'OppositeVehicleTakingPriority',
+                        'ParkedObstacleTwoWays',
+                        'YieldToEmergencyVehicle',
+                        'VehicleTurningRoutePedestrian'
+                    ],
+                    hard_scenario_max_gap_samples: 500
+                },
+                route_max_length_m: 150.0
+            };
+        }
+
+        function makeOffPolicyEnv(algorithmName) {
+            return {
+                environment: {
+                    debug_mode: false,
+                    result_dir: './results',
+                    record: false,
+                    blocked_time_out_limit: 180,
+                    max_episode_steps: 768,
+                    worker_recycle_interval_episodes: 40,
+                    worker_recycle_jitter_episodes: 10,
+                    truncation: { penalty: -200.0 },
+                    deviation_limit: 30,
+                    infos: deepClone(ENV_INFOS),
+                    terminate_events: deepClone(OFF_POLICY_TERMINATE_EVENTS),
+                    termination: deepClone(COMMON_TERMINATION)
+                },
+                carla: makeOffPolicyCarla(),
+                routes: makeOffPolicyRoutes(),
+                termination: { type: algorithmName },
+                reward: { type: algorithmName },
+                action_space: {
+                    type: 'continuous_accelerate_steering_rate',
+                    action_repeat: 1,
+                    action_dim: 2,
+                    continuous_actions_list: [[-1.0, 1.0], [-1.0, 1.0]]
+                },
+                observation_space: makeObservationConfig(true)
+            };
+        }
+
+        function makeOnPolicyEnv(algorithmName, carlaConfig) {
+            return {
+                environment: {
+                    debug_mode: false,
+                    result_dir: './results',
+                    record: false,
+                    blocked_time_out_limit: 180,
+                    max_episode_steps: 1024,
+                    worker_recycle_interval_episodes: 40,
+                    worker_recycle_jitter_episodes: 10,
+                    deviation_limit: 30,
+                    terminate_events: deepClone(ON_POLICY_TERMINATE_EVENTS),
+                    termination: deepClone(COMMON_TERMINATION)
+                },
+                carla: carlaConfig,
+                routes: makeOnPolicyRoutes(),
+                termination: { type: algorithmName },
+                reward: { type: algorithmName },
+                action_space: {
+                    type: 'discrete',
+                    action_repeat: 1,
+                    discrete_action_num: 16,
+                    discrete_actions_list: deepClone(DISCRETE_ACTIONS_16)
+                },
+                observation_space: makeObservationConfig(false)
+            };
+        }
+
+        const ON_POLICY_POLICY = {
+            feature_extractor: {
+                type: 'combined_v2',
+                features_dim: 256,
+                use_layer_norm: true,
+                cnn_channels: [8, 16, 32, 64, 128, 256],
+                state_neurons: [256, 256],
+                fusion_dims: [512]
+            },
+            net_arch: {
+                pi: [256, 256],
+                vf: [256, 256]
+            },
+            use_layer_norm_policy_head: true,
+            value_head_type: 'categorical',
+            value_num_bins: 129,
+            value_support_min: -7.0,
+            value_support_max: 7.0,
+            value_transform: 'symlog'
+        };
+
+        const SAC_POLICY = {
+            feature_extractor: { type: 'combined' },
+            features_dim: 256,
+            net_arch: {
+                pi: [256, 128],
+                qf: [256, 128]
+            },
+            activation_fn: 'relu',
+            log_std_init: -3.0,
+            distributional: {
+                enabled: true,
+                num_bins: 301,
+                use_symlog: true,
+                v_max: 900.0,
+                v_min: -500.0
+            },
+            moe: {
+                aux_loss_weight: 0.01,
+                actor: {
+                    enabled: true,
+                    num_experts: 4,
+                    top_k: 2,
+                    noisy_gating: true
+                },
+                critic: {
+                    enabled: false,
+                    num_experts: 4,
+                    top_k: 2,
+                    noisy_gating: true
+                }
+            }
+        };
+
+        const TD3_POLICY = deepClone(SAC_POLICY);
+        delete TD3_POLICY.log_std_init;
+
+        const MODERN_PRESETS = {
+            sac: {
+                algorithm: {
+                    name: 'sac',
+                    total_timesteps: 10000000,
+                    buffer_size: 800000,
+                    learning_starts: 40000,
+                    batch_size: 512,
+                    gamma: 0.99,
+                    tau: 0.005,
+                    learning_rate: 2.0e-4,
+                    learning_rate_final: 5.0e-5,
+                    train_freq: 256,
+                    gradient_steps: 16,
+                    ent_coef: 'auto',
+                    target_update_interval: 2,
+                    target_entropy: 'auto',
+                    bc_enabled: false,
+                    bc_lambda_initial: 2.0,
+                    bc_lambda_decay_steps: 1000000,
+                    bc_lambda_final: 0.0,
+                    bc_prior_action: [0.8, 0.0],
+                    bc_source: 'lqr',
+                    warmup_source: 'lqr',
+                    exploration_mode: 'epsilon_greedy',
+                    exploit_prob_initial: 0.5,
+                    exploit_prob_final: 0.5,
+                    exploit_prob_decay_steps: 70000000,
+                    explore_actions: [[0.1, 0.0], [1.0, 0.0], [-1.0, 0.0], [0.7, -0.5], [0.7, 0.5], [0.7, -1.0], [0.7, 1.0]],
+                    explore_action_repeat: 1,
+                    per_alpha: 0.6,
+                    per_beta: 0.4,
+                    per_beta_annealing_steps: 3500000,
+                    per_min_priority: 0.000001,
+                    static_buffer: {
+                        enabled: true,
+                        capacity: 15000,
+                        completion_threshold: 50.0,
+                        strict_success_threshold: 99.9,
+                        require_clean_for_high_completion: true,
+                        simple_scenarios: ['VanillaSignalized'],
+                        static_ratio_initial: 0.0,
+                        static_ratio_final: 0.3,
+                        static_ratio_anneal_steps: 5000000,
+                        scenarios: []
+                    }
+                },
+                policy: deepClone(SAC_POLICY),
+                training: {
+                    seed: 42,
+                    device: 'cuda',
+                    log_dir: './logs/sac_bev_mask',
+                    save_freq: 200000,
+                    verbose: 1,
+                    log_interval: 4,
+                    adapter: { mode: 'standard', min_ready: 4, timeout: 120.0 },
+                    visualization: { enabled: true, save_interval: 10, fps: 10, lazy_capture: true, overlay_info: true, max_videos: 500 }
+                },
+                env: makeOffPolicyEnv('sac')
+            },
+            td3: {
+                algorithm: {
+                    name: 'td3',
+                    total_timesteps: 10000000,
+                    buffer_size: 800000,
+                    learning_starts: 40000,
+                    batch_size: 512,
+                    gamma: 0.99,
+                    tau: 0.005,
+                    learning_rate: 2.0e-4,
+                    learning_rate_final: 5.0e-5,
+                    train_freq: 256,
+                    gradient_steps: 16,
+                    policy_delay: 2,
+                    target_policy_noise: 0.2,
+                    target_noise_clip: 0.5,
+                    exploration_noise: 0.1,
+                    exploration_noise_decay_steps: 0,
+                    exploration_noise_final_scale: 1.0,
+                    bc_enabled: false,
+                    bc_lambda_initial: 2.0,
+                    bc_lambda_decay_steps: 1000000,
+                    bc_lambda_final: 0.0,
+                    bc_prior_action: [0.8, 0.0],
+                    bc_source: 'lqr',
+                    warmup_source: 'lqr',
+                    exploration_mode: 'epsilon_greedy',
+                    exploit_prob_initial: 0.5,
+                    exploit_prob_final: 0.5,
+                    exploit_prob_decay_steps: 70000000,
+                    explore_actions: [[0.1, 0.0], [1.0, 0.0], [-1.0, 0.0], [0.7, -0.5], [0.7, 0.5], [0.7, -1.0], [0.7, 1.0]],
+                    explore_action_repeat: 1,
+                    per_alpha: 0.6,
+                    per_beta: 0.4,
+                    per_beta_annealing_steps: 3500000,
+                    per_min_priority: 0.000001,
+                    static_buffer: {
+                        enabled: true,
+                        capacity: 15000,
+                        completion_threshold: 50.0,
+                        strict_success_threshold: 99.9,
+                        require_clean_for_high_completion: true,
+                        simple_scenarios: ['VanillaSignalized'],
+                        static_ratio_initial: 0.0,
+                        static_ratio_final: 0.3,
+                        static_ratio_anneal_steps: 5000000,
+                        scenarios: []
+                    }
+                },
+                policy: deepClone(TD3_POLICY),
+                training: {
+                    seed: 42,
+                    device: 'cuda',
+                    log_dir: './logs/td3_bev_mask',
+                    save_freq: 200000,
+                    verbose: 1,
+                    log_interval: 4,
+                    adapter: { mode: 'standard', min_ready: 4, timeout: 120.0 },
+                    visualization: { enabled: true, save_interval: 10, fps: 10, lazy_capture: true, overlay_info: true, max_videos: 500 }
+                },
+                env: makeOffPolicyEnv('td3')
+            },
+            ppo: {
+                algorithm: {
+                    name: 'ppo',
+                    total_timesteps: 20000000,
+                    n_steps: 4096,
+                    batch_size: 1024,
+                    n_epochs: 3,
+                    gamma: 0.99,
+                    gae_lambda: 0.95,
+                    clip_range: 0.1,
+                    normalize_advantage: true,
+                    ent_coef: 0.01,
+                    ent_coef_final: 0.01,
+                    vf_coef: 0.15,
+                    max_grad_norm: 0.5,
+                    learning_rate: 1.0e-4,
+                    learning_rate_final: 1.0e-5,
+                    target_kl: null,
+                    truncation: null,
+                    success_trajectory: {
+                        enabled: false,
+                        output_dir: null,
+                        compress: true,
+                        strict_success_threshold: 99.9,
+                        max_success_trajectories: 200
+                    }
+                },
+                policy: deepClone(ON_POLICY_POLICY),
+                training: {
+                    seed: 3407,
+                    device: 'cuda',
+                    log_dir: './logs/ppo_bev_example',
+                    save_freq: 100000,
+                    verbose: 1,
+                    log_interval: 1,
+                    adapter: { mode: 'standard', min_ready: 4, timeout: 30.0 },
+                    visualization: { enabled: true, save_interval: 10, fps: 10, lazy_capture: true, overlay_info: true, max_videos: 1000 }
+                },
+                env: makeOnPolicyEnv('ppo', makeOnPolicyCarla(3, 2026, 8202))
+            },
+            a2c: {
+                algorithm: {
+                    name: 'a2c',
+                    total_timesteps: 20000000,
+                    n_steps: 4096,
+                    gamma: 0.99,
+                    gae_lambda: 0.95,
+                    normalize_advantage: true,
+                    ent_coef: 0.01,
+                    ent_coef_final: 0.01,
+                    vf_coef: 0.15,
+                    max_grad_norm: 0.5,
+                    learning_rate: 1.0e-4,
+                    learning_rate_final: 1.0e-5,
+                    truncation: null
+                },
+                policy: deepClone(ON_POLICY_POLICY),
+                training: {
+                    seed: 3407,
+                    device: 'cuda',
+                    log_dir: './logs/a2c_bev_example',
+                    save_freq: 100000,
+                    verbose: 1,
+                    log_interval: 1,
+                    adapter: { mode: 'standard', min_ready: 4, timeout: 30.0 },
+                    visualization: { enabled: true, save_interval: 10, fps: 10, lazy_capture: true, overlay_info: true, max_videos: 1000 }
+                },
+                env: makeOnPolicyEnv('a2c', makeOnPolicyCarla(4, 2426, 9202))
+            }
+        };
+
+        const PRESET_SOURCES = {
+            ppo: 'configs/ppo_bev_example.yaml',
+            sac: 'configs/sac_bev_example.yaml',
+            td3: 'configs/td3_bev_example.yaml',
+            a2c: 'configs/a2c_bev_example.yaml'
+        };
+
+        function getSelectedAlgorithmKey() {
+            return document.getElementById('algorithmPreset')?.value || 'ppo';
+        }
+
+        function getSelectedPreset() {
+            return deepClone(MODERN_PRESETS[getSelectedAlgorithmKey()] || MODERN_PRESETS.ppo);
+        }
+
+        function normalizeConfigForEditor(config) {
+            if (!config || typeof config !== 'object' || Array.isArray(config)) {
+                throw new Error('The YAML root must be a mapping.');
+            }
+            if (config.env && typeof config.env === 'object') {
+                return deepClone(config);
+            }
+            const fullConfig = getSelectedPreset();
+            fullConfig.env = deepClone(config);
+            return fullConfig;
+        }
+
+        function getHistoryIndexFromUI(containerId) {
+            const inputs = document.querySelectorAll(`#${containerId} input[type="number"]`);
+            return Array.from(inputs).map(input => parseInt(input.value)).filter(Number.isFinite);
+        }
+
+        function getRouteFilesFromUI() {
+            const routeFile = document.getElementById('routeFile')?.value.trim();
+            return [routeFile || 'resources/routes/train_routes_demo.xml'];
+        }
+
+        function collectCarlaFromUI(baseCarla) {
+            const carlaEnvItems = document.querySelectorAll('#carlaEnvList .carla-env-item');
+            const carla = deepClone(baseCarla);
+            carla.num_envs = carlaEnvItems.length;
+            carla.port = [];
+            carla.traffic_manager_port = [];
+            carla.traffic_manager_seed = [];
+            carla.gpu_id = [];
+            carla.host = [];
+
+            carlaEnvItems.forEach(item => {
+                carla.port.push(parseInt(item.querySelector('.carla-port').value) || 2000);
+                carla.traffic_manager_port.push(parseInt(item.querySelector('.carla-tm-port').value) || 8000);
+                carla.traffic_manager_seed.push(parseInt(item.querySelector('.carla-tm-seed').value) || 0);
+                carla.gpu_id.push(parseInt(item.querySelector('.carla-gpu').value) || 0);
+                carla.host.push(item.querySelector('.carla-host').value.trim() || '127.0.0.1');
+            });
+
+            carla.frequency_hz = readNumber('envFrequency', carla.frequency_hz, true);
+            carla.timeout = readNumber('carlaTimeout', carla.timeout);
+            carla.connection_timeout = readNumber('carlaConnectionTimeout', carla.connection_timeout);
+            carla.server_wait_timeout = readNumber('carlaServerWaitTimeout', carla.server_wait_timeout);
+            carla.retry_interval = readNumber('carlaRetryInterval', carla.retry_interval);
+            carla.max_retries = readNumber('carlaMaxRetries', carla.max_retries, true);
+            delete carla.server_mode;
+            carla.quality_level = document.getElementById('carlaQualityLevel')?.value || carla.quality_level;
+            carla.render_offscreen = document.getElementById('carlaRenderOffScreen')?.checked === true;
+            carla.no_sound = document.getElementById('carlaNoSound')?.checked === true;
+            carla.null_rhi = document.getElementById('carlaNullRhi')?.checked === true;
+            carla.no_steam = document.getElementById('carlaNoSteam')?.checked === true;
+            carla.opengl = document.getElementById('carlaOpenGL')?.checked === true;
+            carla.vulkan = document.getElementById('carlaVulkan')?.checked === true;
+            carla.extra_args = document.getElementById('carlaExtraArgs')?.value.trim() || '';
+            return carla;
+        }
+
+        function applyObservationFromUI(env) {
+            const vectorHistoryIndex = getHistoryIndexFromUI('bevHistoryIndex');
+            const scalarHistoryIndex = getHistoryIndexFromUI('scalarHistoryIndex');
+            const observation = env.observation_space || {};
+            const bevType = document.getElementById('bevType')?.value || 'bev_mask';
+            const isEnabled = bevType !== 'none';
+            const laneStyleElement = document.querySelector('input[name="laneStyle"]:checked');
+
+            observation.vector = observation.vector || {};
+            observation.vector.enable = isEnabled;
+
+            if (isEnabled) {
+                observation.vector.type = bevType;
+                observation.vector.map_dir = document.getElementById('mapDir')?.value || 'resources/maps';
+                observation.vector.mask_width = readNumber('maskWidth', 64);
+                observation.vector.pixels_per_meter = readNumber('pixelsPerMeter', 2);
+                observation.vector.ego_to_bottom = readNumber('egoToBottom', 32);
+                observation.vector.lane_style = laneStyleElement ? laneStyleElement.value : 'unified';
+                const existingElements = observation.vector.elements || {};
+                observation.vector.elements = {};
+                const elementMappings = [
+                    { show: 'showNavigation', multiFrame: null, key: 'navigation' },
+                    { show: 'showEgo', multiFrame: 'egoMultiFrame', key: 'ego_vehicle' },
+                    { show: 'showVehicles', multiFrame: 'vehiclesMultiFrame', key: 'vehicles' },
+                    { show: 'showEmergency', multiFrame: 'emergencyMultiFrame', key: 'emergency_vehicles' },
+                    { show: 'showPedestrians', multiFrame: 'pedestriansMultiFrame', key: 'pedestrians' },
+                    { show: 'showRedLight', multiFrame: 'redLightMultiFrame', key: 'red_light' },
+                    { show: 'showGreenLight', multiFrame: 'greenLightMultiFrame', key: 'green_light' },
+                    { show: 'showYellowLight', multiFrame: 'yellowLightMultiFrame', key: 'yellow_light' },
+                    { show: 'showObstacles', multiFrame: 'obstaclesMultiFrame', key: 'obstacles' },
+                    { show: 'showLanes', multiFrame: null, key: 'lanes' },
+                    { show: 'showStopSigns', multiFrame: 'stopSignsMultiFrame', key: 'stop_signs' }
+                ];
+
+                elementMappings.forEach(mapping => {
+                    const showElement = document.getElementById(mapping.show);
+                    if (!showElement || !showElement.checked) return;
+                    const historyElement = mapping.multiFrame ? document.getElementById(mapping.multiFrame) : null;
+                    observation.vector.elements[mapping.key] = {
+                        ...(existingElements[mapping.key] || {}),
+                        use_history: historyElement ? historyElement.checked === true : false
+                    };
+                });
+                observation.vector.history_index = vectorHistoryIndex;
+            }
+
+            const existingScalars = observation.scalars || {};
+            const existingScalarItems = existingScalars.items || [];
+            const scalarItems = document.querySelectorAll('#scalarObservations .scalar-item');
+            if (scalarItems.length) {
+                observation.scalars = { ...existingScalars, items: [] };
+                scalarItems.forEach(item => {
+                    const type = item.getAttribute('data-type');
+                    const existing = existingScalarItems.find(candidate => candidate.type === type) || {};
+                    const scalar = {
+                        ...existing,
+                        type,
+                        use_history: item.querySelector('input[type="checkbox"]')?.checked === true
+                    };
+                    const normalizeInput = item.querySelector('.scalar-normalize-by');
+                    const normalizeBy = normalizeInput ? parseFloat(normalizeInput.value) : 1;
+                    if (Number.isFinite(normalizeBy) && normalizeBy > 0 && (normalizeBy !== 1 || 'normalize_by' in existing)) {
+                        scalar.normalize_by = normalizeBy;
+                    } else {
+                        delete scalar.normalize_by;
+                    }
+                    observation.scalars.items.push(scalar);
+                });
+                observation.scalars.history_index = scalarHistoryIndex;
+            } else {
+                delete observation.scalars;
+            }
+            env.observation_space = observation;
+        }
+
+        function collectConfig() {
+            const config = deepClone(activeBaseConfig || getSelectedPreset());
+            const env = config.env;
+            if (!env?.environment || !env?.carla || !env?.routes || !env?.observation_space) {
+                throw new Error('Config must contain env.environment, env.carla, env.routes, and env.observation_space mappings.');
+            }
+            const blockedTimeout = readNumber('vehicleBlockedSecondsInline', readNumber('vehicleBlockedSeconds', env.environment.blocked_time_out_limit));
+            const deviationLimit = readNumber('routeDeviationMetersInline', readNumber('routeDeviationMeters', env.environment.deviation_limit));
+
+            env.environment.debug_mode = document.getElementById('debugMode')?.checked === true;
+            delete env.environment.eval_mode;
+            env.environment.result_dir = document.getElementById('resultDir')?.value || './results';
+            env.environment.record = document.getElementById('recordMode')?.checked === true;
+            env.environment.blocked_time_out_limit = blockedTimeout;
+            env.environment.max_episode_steps = readNumber('maxEpisodeSteps', env.environment.max_episode_steps, true);
+            env.environment.deviation_limit = deviationLimit;
+            if (env.environment.termination) {
+                env.environment.termination.blocked_time_out_limit = blockedTimeout;
+            }
+
+            env.carla = collectCarlaFromUI(env.carla);
+            env.routes.route_files = getRouteFilesFromUI();
+            if (document.getElementById('enableMaxRouteLength')?.checked) {
+                env.routes.route_max_length_m = readNumber('maxRouteLength', env.routes.route_max_length_m || 150.0);
+            } else {
+                delete env.routes.route_max_length_m;
+            }
+            delete env.routes.max_route_length;
+
+            applyObservationFromUI(env);
+            return config;
+        }
+
+        function updatePresetSummary(config) {
+            const fullConfig = config || getSelectedPreset();
+            const algorithmName = fullConfig.algorithm?.name || getSelectedAlgorithmKey();
+            const el = document.getElementById('presetSummary');
+            if (!el) return;
+
+            const env = fullConfig.env || {};
+            const action = env.action_space || {};
+            const routes = env.routes || {};
+            const routeFile = Array.isArray(routes.route_files)
+                ? routes.route_files[0]
+                : routes.route_files;
+            const vector = env.observation_space?.vector || {};
+            const workerCount = env.carla?.num_envs ?? env.carla?.port?.length ?? 'unknown';
+            const totalTimesteps = fullConfig.algorithm?.total_timesteps ?? 'unknown';
+            const actionDetail = action.type === 'discrete'
+                ? `${action.type} (${action.discrete_action_num ?? action.discrete_actions_list?.length ?? '?'} actions)`
+                : `${action.type || 'unknown'} (${action.action_dim ?? action.continuous_actions_list?.length ?? '?'} dims)`;
+            const vectorDetail = vector.enable === false
+                ? 'disabled'
+                : `${vector.type || 'unknown'} · ${vector.mask_width ?? '?'} m @ ${vector.pixels_per_meter ?? '?'} px/m`;
+            const rows = [
+                ['Source', activeConfigSource, 'preset-summary-source'],
+                ['Algorithm', `${algorithmName} · ${Number.isFinite(totalTimesteps) ? totalTimesteps.toLocaleString('en-US') : totalTimesteps} steps`],
+                ['Action', actionDetail],
+                ['Reward / termination', `${env.reward?.type || 'unknown'} / ${env.termination?.type || 'unknown'}`],
+                ['Routes', `${routes.sample_mode || 'unknown'} · ${routeFile || 'none'}`],
+                ['Observation', vectorDetail],
+                ['CARLA', `${workerCount} workers · ${env.carla?.frequency_hz ?? '?'} Hz`]
+            ];
+
+            el.replaceChildren();
+            rows.forEach(([label, value, extraClass]) => {
+                const row = document.createElement('div');
+                row.className = `preset-summary-row${extraClass ? ` ${extraClass}` : ''}`;
+                const strong = document.createElement('strong');
+                strong.textContent = `${label}: `;
+                row.append(strong, document.createTextNode(String(value)));
+                el.appendChild(row);
+            });
+        }
+
+        function refreshPresetSummaryFromUI() {
+            if (!activeBaseConfig) return;
+            try {
+                updatePresetSummary(collectConfig());
+            } catch (_) {
+                // A partially edited numeric field should not interrupt typing.
+            }
+        }
+
+        function createCarlaEnvRow(index, port, tmPort, tmSeed, gpuId, host) {
+            const item = document.createElement('div');
+            item.className = 'carla-env-item';
+            item.style.cssText = 'display: grid; grid-template-columns: 50px 1fr 1fr 1fr 1fr 1fr auto; gap: 8px; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 8px;';
+            item.innerHTML = `
+                <span style="font-weight: 500; color: #495057; font-size: 13px;">Env ${index}</span>
+                <div>
+                    <label style="font-size: 11px; color: #6c757d;">Port</label>
+                    <input type="number" class="carla-port" value="${port}" min="1" max="65535" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #6c757d;">TM Port</label>
+                    <input type="number" class="carla-tm-port" value="${tmPort}" min="1" max="65535" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #6c757d;">TM Seed</label>
+                    <input type="number" class="carla-tm-seed" value="${tmSeed}" min="0" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #6c757d;">GPU ID</label>
+                    <input type="number" class="carla-gpu" value="${gpuId}" min="0" max="15" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-size: 13px;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #6c757d;">Host</label>
+                    <input type="text" class="carla-host" value="${host}" style="width: 100%; padding: 5px; border: 2px solid #dee2e6; border-radius: 4px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px;">
+                </div>
+                <button class="btn btn-danger" onclick="removeCarlaEnv(this)" style="padding: 5px 10px; font-size: 12px;">x</button>
+            `;
+            return item;
+        }
+
+        function loadCarlaRows(carla) {
+            const container = document.getElementById('carlaEnvList');
+            if (!container) return;
+            container.innerHTML = '';
+            const count = carla.num_envs || Math.max(carla.port?.length || 0, 1);
+            for (let i = 0; i < count; i++) {
+                container.appendChild(createCarlaEnvRow(
+                    i,
+                    carla.port?.[i] ?? 2000,
+                    carla.traffic_manager_port?.[i] ?? 8000,
+                    carla.traffic_manager_seed?.[i] ?? 0,
+                    carla.gpu_id?.[i] ?? 0,
+                    carla.host?.[i] ?? `127.0.0.${i + 1}`
+                ));
+            }
+            updateNumEnvsDisplay();
+        }
+
+        function loadRoutesToUI(routes) {
+            const routeFile = Array.isArray(routes.route_files)
+                ? routes.route_files[0]
+                : routes.route_files;
+            setInputValue('routeFile', routeFile || 'resources/routes/train_routes_demo.xml');
+            const maxLength = routes.route_max_length_m ?? routes.max_route_length;
+            setChecked('enableMaxRouteLength', maxLength !== undefined);
+            setInputValue('maxRouteLength', maxLength !== undefined ? maxLength : 150);
+            const maxRouteInput = document.getElementById('maxRouteLengthInput');
+            if (maxRouteInput) maxRouteInput.style.display = maxLength !== undefined ? 'block' : 'none';
+        }
+
+        function loadHistoryRows(containerId, indices, updatePreview = false) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            indices.forEach(index => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <input type="number" value="${index}"${updatePreview ? ' onchange="updateBEVPreview()"' : ''}>
+                    <button class="btn btn-danger" onclick="removeHistoryIndex(this)${updatePreview ? '; updateBEVPreview()' : ''}">x</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function loadObservationToUI(observation) {
+            const vector = observation?.vector || {};
+            setInputValue('bevType', vector.enable === false ? 'none' : (vector.type || 'bev_mask'));
+            setInputValue('mapDir', vector.map_dir || 'resources/maps');
+            setInputValue('maskWidth', vector.mask_width ?? 64);
+            setInputValue('pixelsPerMeter', vector.pixels_per_meter ?? 2);
+            setInputValue('egoToBottom', vector.ego_to_bottom ?? 32);
+            if (vector.lane_style) {
+                const laneStyleRadio = document.querySelector(`input[name="laneStyle"][value="${vector.lane_style}"]`);
+                if (laneStyleRadio) laneStyleRadio.checked = true;
+            }
+
+            const elements = vector.elements || {};
+            const loadElement = (key, showId, historyId) => {
+                const element = elements[key];
+                setChecked(showId, element !== undefined);
+                if (historyId) setChecked(historyId, element?.use_history === true);
+            };
+            setChecked('showRoad', true);
+            loadElement('lanes', 'showLanes', null);
+            loadElement('navigation', 'showNavigation', null);
+            loadElement('ego_vehicle', 'showEgo', 'egoMultiFrame');
+            loadElement('vehicles', 'showVehicles', 'vehiclesMultiFrame');
+            loadElement('emergency_vehicles', 'showEmergency', 'emergencyMultiFrame');
+            loadElement('pedestrians', 'showPedestrians', 'pedestriansMultiFrame');
+            loadElement('obstacles', 'showObstacles', 'obstaclesMultiFrame');
+            loadElement('red_light', 'showRedLight', 'redLightMultiFrame');
+            loadElement('green_light', 'showGreenLight', 'greenLightMultiFrame');
+            loadElement('yellow_light', 'showYellowLight', 'yellowLightMultiFrame');
+            loadElement('stop_signs', 'showStopSigns', 'stopSignsMultiFrame');
+
+            const vectorHistoryIndex = vector.history_index || [-16, -11, -6, -1];
+            const scalarHistoryIndex = observation?.scalars?.history_index || vectorHistoryIndex;
+            loadHistoryRows('bevHistoryIndex', vectorHistoryIndex, true);
+            loadHistoryRows('scalarHistoryIndex', scalarHistoryIndex);
+
+            const scalarContainer = document.getElementById('scalarObservations');
+            if (scalarContainer) {
+                scalarContainer.innerHTML = '';
+                scalarObsCounter = 0;
+                const scalarItems = observation?.scalars?.items || [];
+                scalarItems.forEach(scalar => {
+                    document.getElementById('scalarTypeSelect').value = scalar.type;
+                    addScalarObservation();
+                    const items = scalarContainer.querySelectorAll('.scalar-item');
+                    const lastItem = items[items.length - 1];
+                    if (lastItem) {
+                        lastItem.querySelector('input[type="checkbox"]').checked = scalar.use_history !== false;
+                        lastItem.querySelector('.scalar-normalize-by').value = scalar.normalize_by ?? 1;
+                    }
+                });
+            }
+        }
+
+        function loadConfigToUI(config, options = {}) {
+            const fullConfig = normalizeConfigForEditor(config);
+            const envConfig = fullConfig.env || {};
+            if (!envConfig.environment || !envConfig.carla || !envConfig.routes || !envConfig.observation_space) {
+                throw new Error('Config must contain env.environment, env.carla, env.routes, and env.observation_space mappings.');
+            }
+            activeBaseConfig = deepClone(fullConfig);
+            activeConfigSource = options.sourceLabel || PRESET_SOURCES[fullConfig.algorithm?.name] || 'Imported YAML';
+            if (fullConfig.algorithm?.name && MODERN_PRESETS[fullConfig.algorithm.name]) {
+                setInputValue('algorithmPreset', fullConfig.algorithm.name);
+            }
+
+            const environment = envConfig.environment || {};
+            setInputValue('resultDir', environment.result_dir || './results');
+            setInputValue('maxEpisodeSteps', environment.max_episode_steps ?? 1024);
+            setInputValue('vehicleBlockedSecondsInline', environment.blocked_time_out_limit ?? 180);
+            setInputValue('vehicleBlockedSeconds', environment.blocked_time_out_limit ?? 180);
+            setInputValue('routeDeviationMetersInline', environment.deviation_limit ?? 30);
+            setInputValue('routeDeviationMeters', environment.deviation_limit ?? 30);
+            setInputValue('rewardDisplay', envConfig.reward?.type || fullConfig.algorithm?.name || '');
+            setChecked('debugMode', environment.debug_mode === true);
+            setChecked('recordMode', environment.record === true);
+
+            const carla = envConfig.carla || {};
+            setInputValue('envFrequency', carla.frequency_hz ?? 10);
+            setInputValue('carlaTimeout', carla.timeout ?? 60);
+            setInputValue('carlaConnectionTimeout', carla.connection_timeout ?? 30);
+            setInputValue('carlaServerWaitTimeout', carla.server_wait_timeout ?? 300);
+            setInputValue('carlaRetryInterval', carla.retry_interval ?? 2);
+            setInputValue('carlaMaxRetries', carla.max_retries ?? 5);
+            setInputValue('carlaQualityLevel', carla.quality_level || 'Low');
+            setInputValue('carlaExtraArgs', carla.extra_args || '');
+            setChecked('carlaRenderOffScreen', carla.render_offscreen !== false);
+            setChecked('carlaNoSound', carla.no_sound !== false);
+            setChecked('carlaNullRhi', carla.null_rhi !== false);
+            setChecked('carlaNoSteam', carla.no_steam === true);
+            setChecked('carlaOpenGL', carla.opengl === true);
+            setChecked('carlaVulkan', carla.vulkan === true);
+            loadCarlaRows(carla);
+            loadRoutesToUI(envConfig.routes || {});
+            loadObservationToUI(envConfig.observation_space || {});
+
+            updatePresetSummary(fullConfig);
+            updateColorPickerVisibility();
+            updateBEVPreview();
+        }
+
+        function loadSelectedPresetToUI() {
+            const algorithm = getSelectedAlgorithmKey();
+            loadConfigToUI(getSelectedPreset(), { sourceLabel: PRESET_SOURCES[algorithm] });
+        }
+
+        function exportYAML() {
+            try {
+                const config = collectConfig();
+                const yamlStr = jsyaml.dump(config, {
+                    indent: 2,
+                    lineWidth: -1,
+                    noRefs: true,
+                    sortKeys: false
+                });
+
+                const blob = new Blob([yamlStr], { type: 'text/yaml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${config.algorithm?.name || 'bench2drive'}_bev_config.yaml`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('YAML config exported.', 'success');
+            } catch (error) {
+                showToast('Unable to export YAML: ' + error.message, 'error');
+            }
+        }
+
+        function openAutoFillPanel() {
+            const panel = document.getElementById('autoFillPanel');
+            const button = document.getElementById('autoFillButton');
+            const input = document.getElementById('autoFillCount');
+            if (!panel || !input) return;
+            panel.hidden = false;
+            button?.setAttribute('aria-expanded', 'true');
+            input.focus();
+            input.select();
+        }
+
+        function closeAutoFillPanel() {
+            const panel = document.getElementById('autoFillPanel');
+            const button = document.getElementById('autoFillButton');
+            if (panel) panel.hidden = true;
+            button?.setAttribute('aria-expanded', 'false');
+        }
+
+        function applyAutoFillCarlaEnvs() {
+            const numEnvs = parseInt(document.getElementById('autoFillCount')?.value, 10);
+            if (!Number.isFinite(numEnvs) || numEnvs < 1 || numEnvs > 64) {
+                showToast('Enter a valid environment count (1-64).', 'warning');
+                return;
+            }
+            const firstEnv = document.querySelector('#carlaEnvList .carla-env-item');
+            const basePort = parseInt(firstEnv?.querySelector('.carla-port')?.value) || 2000;
+            const baseTmPort = parseInt(firstEnv?.querySelector('.carla-tm-port')?.value) || 8000;
+            const baseTmSeed = parseInt(firstEnv?.querySelector('.carla-tm-seed')?.value) || 0;
+            const baseGpu = parseInt(firstEnv?.querySelector('.carla-gpu')?.value) || 0;
+            const baseHost = firstEnv?.querySelector('.carla-host')?.value || '127.0.0.1';
+            const hostPrefix = baseHost.replace(/\d+$/, '');
+            const hostStart = parseInt((baseHost.match(/(\d+)$/) || ['1', '1'])[1]) || 1;
+            const container = document.getElementById('carlaEnvList');
+            container.innerHTML = '';
+            for (let i = 0; i < numEnvs; i++) {
+                container.appendChild(createCarlaEnvRow(
+                    i,
+                    basePort + i * 10,
+                    baseTmPort + i * 10,
+                    baseTmSeed,
+                    baseGpu,
+                    `${hostPrefix}${hostStart + i}`
+                ));
+            }
+            updateNumEnvsDisplay();
+            closeAutoFillPanel();
+            showToast(`Created ${numEnvs} CARLA environment rows.`, 'success');
+        }
+
+        function applyModernUiVisibility() {
+            const roadPreviewOnly = document.getElementById('showRoad')?.closest('.checkbox-item');
+            if (roadPreviewOnly) roadPreviewOnly.style.display = 'none';
+            const bevType = document.getElementById('bevType');
+            if (bevType) {
+                Array.from(bevType.options).forEach(option => {
+                    if (!['bev_mask', 'bev_image', 'none'].includes(option.value)) option.remove();
+                });
+            }
+        }
+
+        function init() {
+            applyModernUiVisibility();
+            loadSelectedPresetToUI();
+            document.addEventListener('change', event => {
+                if (event.target.matches('input, select') && !['algorithmPreset', 'importFile'].includes(event.target.id)) {
+                    refreshPresetSummaryFromUI();
+                }
+            });
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+# DrivePi0 dependencies are supplied by the external DriveMoE repository.
+# See docs/source/rl_finetune_drivepi0.md for installation and compatibility notes.
+# No additional generic wheel is pinned here.

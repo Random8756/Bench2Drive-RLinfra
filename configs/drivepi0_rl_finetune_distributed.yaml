@@ -1,0 +1,288 @@
+# DrivePi0 distributed rl_finetune config for Slurm + shared storage.
+# 3 DDP learners on node 0 only; 2 collectors per remaining GPU (26 total).
+# Rank 0: learners on cuda:0..2, 10 collectors on cuda:3..7 (2 per GPU).
+# Other nodes: 16 collectors on cuda:0..7 (2 per GPU).
+# collector_devices[0..9] are used by node 0; node 1 uses all 16 entries.
+
+algorithm:
+  name: ppo
+  # Global batch size: 48 samples per learner rank x 3 ranks.
+  batch_size: 144
+  n_epochs: 1
+  gamma: 0.99
+  gae_lambda: 1.0
+  clip_range: 0.1
+  normalize_advantage: true
+  ent_coef: 1.0e-4
+  vf_coef: 0.15
+  max_grad_norm: 1.0
+  learning_rate: 5.0e-6
+  target_kl: 0.02
+
+rl_finetune:
+  seed: 3407
+  device: cuda:0
+  log_dir: ./logs/drivepi0_rl_finetune_distributed
+  verbose: 1
+  execution_mode: process
+  learner:
+    strategy: ddp
+    devices: [cuda:0, cuda:1, cuda:2]
+    backend: nccl
+    timeout_seconds: 3600.0
+  tensorboard:
+    enable: true
+    window_size: 100
+  collector_devices:
+    - cuda:3
+    - cuda:3
+    - cuda:4
+    - cuda:4
+    - cuda:5
+    - cuda:5
+    - cuda:6
+    - cuda:6
+    - cuda:7
+    - cuda:7
+    - cuda:0
+    - cuda:0
+    - cuda:1
+    - cuda:1
+    - cuda:2
+    - cuda:2
+  max_updates: 100
+  rollouts_per_update: 26
+  collect_timeout: 3600
+  control_poll_interval: 1.0
+  shutdown_timeout: 180.0
+  checkpoint_interval: 1
+  max_policy_lag: 2
+  stale_rollout_action: drop
+  cleanup_stale_rollouts: true
+  cleanup_consumed_rollouts: true
+  keep_last_n_update_rollouts: 0
+  update_sample_filter:
+    success_terminal_window_steps: 0
+    failure_terminal_window_steps: 200
+  policy_sync:
+    filename: policy_latest.pt
+  distributed:
+    enabled: true
+    num_nodes: 2
+    collectors_per_node: 16
+    learner_node_collectors: 10
+    startup_timeout: 1800.0
+    heartbeat_interval: 10.0
+    heartbeat_timeout: 3600.0
+    stagger_seconds: 10.0
+    cuda_vulkan_identity_fallback: true
+  sim_actor:
+    auto_reset: true
+    manage_servers: true
+    use_rgb_shm: true
+    rgb_num_slots: 2
+    server_wait_timeout: 400.0
+    event_timeout: 300.0
+    actor_stop_timeout: 5.0
+    start_method: spawn
+
+policy_adapter:
+  type: drivepi0
+  checkpoint: ../DriveMoE/ckpts/DrivePi0_Base_bf16.pt
+  config:
+    repo_dir: ../DriveMoE
+    config_path: config/eval/DrivePi0/closed_loop.yaml
+    pretrained_model_path: ckpts/paligemma-3b-pt-224
+    statistics_path: config/statistics/b2d_statistics.json
+    use_bf16: true
+    num_inference_steps: 10
+    rgb_key: drivepi0_rgb
+    state_key: drivepi0_state
+    kv_prefix: drivepi0_kv
+    text_prompt: predict trajectory
+    image_preprocess: drivemoe
+    image_jpeg_quality: 20
+    image_augment: true
+    action_init_mode: randn
+    value_hidden_dim: 512
+    log_std_init: -1.5
+    ppo:
+      mean_ref_l2_coef: 0.01
+    state_shape: [5, 10]
+    trajectory:
+      num_points: 10
+      state_dim: 2
+
+env:
+  model_integrations:
+    drivepi0_route:
+      enable: true
+      min_distance: 7.5
+      max_distance: 25.0
+      gps_sensor_id: GPS
+  environment:
+    debug_mode: false
+    record: false
+    blocked_time_out_limit: 180
+    max_episode_steps: 2000
+    worker_recycle_interval_episodes: 20
+    worker_recycle_jitter_episodes: 5
+    deviation_limit: 30
+    terminate_events:
+      - COLLISION_PEDESTRIAN
+      - COLLISION_VEHICLE
+      - COLLISION_STATIC
+      - TRAFFIC_LIGHT_INFRACTION
+      - STOP_INFRACTION
+      - VEHICLE_BLOCKED
+      - ROUTE_DEVIATION
+      - USELESS_MOVE_TIMEOUT
+      - NOT_IN_CARLANE
+      - SECOND_RED_SAME_LIGHT
+    termination:
+      success_percent_threshold: 99.9
+      off_road_threshold: 1.5
+      blocked_time_out_limit: 180.0
+      second_red_light_distance_threshold: 20.0
+      second_red_light_clear_distance: 30.0
+      second_red_stop_speed_threshold: 0.2
+  carla:
+    load_world_timeout: 400
+    worker_ready_timeout: 3600
+    disable_watchdog: true
+    host:
+      - 127.0.0.135
+      - 127.0.0.136
+      - 127.0.0.137
+      - 127.0.0.138
+      - 127.0.0.139
+      - 127.0.0.140
+      - 127.0.0.141
+      - 127.0.0.142
+      - 127.0.0.143
+      - 127.0.0.144
+      - 127.0.0.145
+      - 127.0.0.146
+      - 127.0.0.147
+      - 127.0.0.148
+      - 127.0.0.149
+      - 127.0.0.150
+    port:
+      - 2026
+      - 2036
+      - 2046
+      - 2056
+      - 2066
+      - 2076
+      - 2086
+      - 2096
+      - 2106
+      - 2116
+      - 2126
+      - 2136
+      - 2146
+      - 2156
+      - 2166
+      - 2176
+    traffic_manager_port:
+      - 8202
+      - 8302
+      - 8402
+      - 8502
+      - 8602
+      - 8702
+      - 8802
+      - 8902
+      - 9002
+      - 9102
+      - 9202
+      - 9302
+      - 9402
+      - 9502
+      - 9602
+      - 9702
+    traffic_manager_seed: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    gpu_id: auto
+    frequency_hz: 20
+    server_fps: 20
+    timeout: 300
+    connection_timeout: 300
+    server_wait_timeout: 400
+    retry_interval: 2
+    max_retries: 5
+    render_offscreen: true
+    no_rendering_mode: false
+    no_sound: true
+    null_rhi: false
+    no_steam: false
+    opengl: false
+    vulkan: false
+    quality_level: Default
+    extra_args: ""
+  routes:
+    route_files:
+      - resources/routes/finetune_routes_demo.xml
+    sample_mode: random
+    route_max_length_m: 150.0
+  termination:
+    type: ppo
+  reward:
+    type: minddrive_sparse
+  action_space:
+    type: trajectory
+    action_repeat: 2
+    trajectory:
+      num_points: 10
+      state_dim: 2
+      horizon: 1.0
+      freq: 10.0
+    controller:
+      type: drivepi0
+      interp_hz: 10.0
+      points_per_meter: 10.0
+      speed_lookahead_points: 3
+      use_heading_interpolation: false
+  observation_space:
+    reset_warmup_ticks: 11
+    other_sensor_presets:
+      - drivepi0
+    vector:
+      enable: false
+    rgb:
+      enable: true
+      output_key: rgb
+      emit_output: false
+      temporal_output_key: drivepi0_rgb
+      temporal_camera_id: CAM_FRONT
+      temporal_history_index: [-1, -3]
+      frame_timeout: 300.0
+      frame_history_size: 8
+      warmup_ticks: 0
+      tick_timeout: 60.0
+      camera_order:
+        - CAM_FRONT
+      sensors:
+        - type: sensor.camera.rgb
+          x: 0.80
+          y: 0.0
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: 0.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_FRONT
+    drivepi0_state:
+      enable: true
+      output_key: drivepi0_state
+      statistics_path: ../DriveMoE/config/statistics/b2d_statistics.json
+      temporal_mode: drivemoe_20hz
+      history_index: [-10, -8, -6, -4, -2]
+      state_source: sensor
+      route_source: drivepi0_route
+      fallback_to_actor: false
+      gps_sensor_id: GPS
+      imu_sensor_id: IMU
+      speed_sensor_id: SPEED
+      route_lookahead_index: 25

@@ -1,0 +1,263 @@
+# RGB finetuning smoke test with PPO on cuda:0 and four local collectors.
+
+algorithm:
+  name: ppo
+  batch_size: 16
+  n_epochs: 2
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.1
+  normalize_advantage: true
+  ent_coef: 0.01
+  vf_coef: 0.15
+  max_grad_norm: 0.5
+  learning_rate: 1.0e-4
+  target_kl: null
+
+rl_finetune:
+  seed: 3407
+  device: cuda:0
+  log_dir: ./logs/rl_finetune_rgb_example
+  verbose: 1
+  execution_mode: process
+  num_collectors: 4
+  collector_devices:
+    - cuda:0
+    - cuda:1
+    - cuda:2
+    - cuda:3
+  max_updates: 10
+  rollouts_per_update: 4
+  collect_timeout: 18000
+  control_poll_interval: 1.0
+  shutdown_timeout: 120.0
+  checkpoint_interval: 10
+  max_policy_lag: 2
+  stale_rollout_action: drop
+  cleanup_stale_rollouts: true
+  policy_sync:
+    filename: policy_latest.pt
+  sim_actor:
+    auto_reset: true
+    manage_servers: true
+    use_rgb_shm: true
+    rgb_num_slots: 2
+    server_wait_timeout: 300.0
+    event_timeout: 300.0
+    actor_stop_timeout: 5.0
+    start_method: spawn
+
+policy_adapter:
+  type: tiny_rgb_discrete
+  checkpoint: null
+  config:
+    rgb_key: rgb
+    scalar_key: scalars
+    num_cameras: 6
+    image_height: 900
+    image_width: 1600
+    channels: 3
+    pool_grid: [3, 5]
+    scalar_dim: 12
+    action_dim: 16
+    hidden_dim: 128
+
+env:
+  environment:
+    debug_mode: false
+    record: false
+    blocked_time_out_limit: 180
+    max_episode_steps: 1024
+    worker_recycle_interval_episodes: 40
+    worker_recycle_jitter_episodes: 10
+    deviation_limit: 30
+    terminate_events:
+      - COLLISION_PEDESTRIAN
+      - COLLISION_VEHICLE
+      - COLLISION_STATIC
+      - TRAFFIC_LIGHT_INFRACTION
+      - STOP_INFRACTION
+      - VEHICLE_BLOCKED
+      - ROUTE_DEVIATION
+      - USELESS_MOVE_TIMEOUT
+      - NOT_IN_CARLANE
+      - SECOND_RED_SAME_LIGHT
+    termination:
+      success_percent_threshold: 99.9
+      off_road_threshold: 1.5
+      blocked_time_out_limit: 180.0
+      second_red_light_distance_threshold: 20.0
+      second_red_light_clear_distance: 30.0
+      second_red_stop_speed_threshold: 0.2
+  carla:
+    load_world_timeout: 300
+    worker_ready_timeout: 1800
+    disable_watchdog: true
+    # gpu_id is passed as -graphicsadapter=N to CarlaUE4.
+    num_envs: 4
+    host:
+      - 127.0.0.135
+      - 127.0.0.136
+      - 127.0.0.137
+      - 127.0.0.138
+    port:
+      - 2026
+      - 2036
+      - 2046
+      - 2056
+    traffic_manager_port:
+      - 8202
+      - 8302
+      - 8402
+      - 8502
+    traffic_manager_seed:
+      - 0
+      - 0
+      - 0
+      - 0
+    gpu_id:
+      - 0
+      - 1
+      - 2
+      - 3
+    frequency_hz: 10
+    server_fps: 10
+    timeout: 300
+    connection_timeout: 300
+    server_wait_timeout: 300
+    retry_interval: 2
+    max_retries: 5
+    quality_level: Default
+    render_offscreen: true
+    no_rendering_mode: false
+    no_sound: true
+    null_rhi: false
+    no_steam: false
+    opengl: false
+    vulkan: false
+    extra_args: ""
+
+  routes:
+    route_files:
+      - resources/routes/train_routes_demo.xml
+    sample_mode: random
+    route_max_length_m: 150.0
+  termination:
+    type: ppo
+  reward:
+    type: ppo
+  action_space:
+    type: discrete
+    action_repeat: 1
+    discrete_action_num: 16
+    discrete_actions_list:
+      - [0.0, 0.0, 1.0]
+      - [0.7, -0.3, 0.0]
+      - [0.7, -0.1, 0.0]
+      - [0.7, 0.0, 0.0]
+      - [0.7, 0.1, 0.0]
+      - [0.7, 0.3, 0.0]
+      - [0.3, -0.7, 0.0]
+      - [0.3, -0.3, 0.0]
+      - [0.3, 0.0, 0.0]
+      - [0.3, 0.3, 0.0]
+      - [0.3, 0.7, 0.0]
+      - [0.0, -1.0, 0.0]
+      - [0.0, -0.3, 0.0]
+      - [0.0, 0.0, 0.0]
+      - [0.0, 0.3, 0.0]
+      - [0.0, 1.0, 0.0]
+
+  observation_space:
+    vector:
+      enable: false
+    rgb:
+      enable: true
+      output_key: rgb
+      frame_timeout: 300.0
+      frame_history_size: 2
+      warmup_ticks: 10
+      tick_timeout: 60.0
+      camera_order:
+        - CAM_FRONT
+        - CAM_FRONT_LEFT
+        - CAM_FRONT_RIGHT
+        - CAM_BACK
+        - CAM_BACK_LEFT
+        - CAM_BACK_RIGHT
+      sensors:
+        - type: sensor.camera.rgb
+          x: 0.80
+          y: 0.0
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: 0.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_FRONT
+        - type: sensor.camera.rgb
+          x: 0.27
+          y: -0.55
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: -55.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_FRONT_LEFT
+        - type: sensor.camera.rgb
+          x: 0.27
+          y: 0.55
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: 55.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_FRONT_RIGHT
+        - type: sensor.camera.rgb
+          x: -2.0
+          y: 0.0
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: 180.0
+          width: 1600
+          height: 900
+          fov: 110
+          id: CAM_BACK
+        - type: sensor.camera.rgb
+          x: -0.32
+          y: -0.55
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: -110.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_BACK_LEFT
+        - type: sensor.camera.rgb
+          x: -0.32
+          y: 0.55
+          z: 1.60
+          roll: 0.0
+          pitch: 0.0
+          yaw: 110.0
+          width: 1600
+          height: 900
+          fov: 70
+          id: CAM_BACK_RIGHT
+    scalars:
+      items:
+        - type: speed
+          use_history: true
+        - type: throttle
+          use_history: true
+        - type: brake
+          use_history: true
+      history_index: [-16, -11, -6, -1]

@@ -1,0 +1,331 @@
+algorithm:
+  name: ppo
+  total_timesteps: 20000000
+  n_steps: 4096
+  batch_size: 1024
+  n_epochs: 3
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.1
+  normalize_advantage: true
+  ent_coef: 0.01
+  ent_coef_final: 0.01
+  vf_coef: 0.15
+  max_grad_norm: 0.5
+  learning_rate: 1.0e-4
+  learning_rate_final: 1.0e-5
+  target_kl: null
+  truncation: null
+  success_trajectory:
+    enabled: false
+    output_dir: null
+    compress: true
+    strict_success_threshold: 99.9
+    max_success_trajectories: 200
+
+policy:
+  feature_extractor:
+    type: combined_v2
+    features_dim: 256
+    use_layer_norm: true
+    cnn_channels: [8, 16, 32, 64, 128, 256]
+    state_neurons: [256, 256]
+    fusion_dims: [512]
+  net_arch:
+    pi: [256, 256]
+    vf: [256, 256]
+  use_layer_norm_policy_head: true
+  value_head_type: categorical
+  value_num_bins: 129
+  value_support_min: -7.0
+  value_support_max: 7.0
+  value_transform: symlog
+
+training:
+  seed: 3407
+  device: cuda
+  log_dir: ./logs/ppo_bev_example
+  save_freq: 100000
+  verbose: 1
+  log_interval: 1
+  adapter:
+    mode: standard
+    min_ready: 4
+    timeout: 30.0
+  visualization:
+    enabled: true
+    save_interval: 10
+    fps: 10
+    lazy_capture: true
+    overlay_info: true
+    max_videos: 1000
+
+env:
+  environment:
+    debug_mode: false
+    result_dir: ./results
+    record: false
+    blocked_time_out_limit: 180
+    max_episode_steps: 1024
+    worker_recycle_interval_episodes: 40
+    worker_recycle_jitter_episodes: 10
+    deviation_limit: 30
+    terminate_events:
+      - COLLISION_PEDESTRIAN
+      - COLLISION_VEHICLE
+      - COLLISION_STATIC
+      - TRAFFIC_LIGHT_INFRACTION
+      - STOP_INFRACTION
+      - VEHICLE_BLOCKED
+      - ROUTE_DEVIATION
+      - USELESS_MOVE_TIMEOUT
+      - NOT_IN_CARLANE
+      - SECOND_RED_SAME_LIGHT
+    termination:
+      success_percent_threshold: 99.9
+      off_road_threshold: 1.5
+      blocked_time_out_limit: 180.0
+      second_red_light_distance_threshold: 20.0
+      second_red_light_clear_distance: 30.0
+      second_red_stop_speed_threshold: 0.2
+  carla:
+    load_world_timeout: 400
+    worker_ready_timeout: 1800
+    disable_watchdog: true
+    num_envs: 24
+    host:
+      - 127.0.3.135
+      - 127.0.3.136
+      - 127.0.3.137
+      - 127.0.3.138
+      - 127.0.3.139
+      - 127.0.3.140
+      - 127.0.3.141
+      - 127.0.3.142
+      - 127.0.3.143
+      - 127.0.3.144
+      - 127.0.3.145
+      - 127.0.3.146
+      - 127.0.3.147
+      - 127.0.3.148
+      - 127.0.3.149
+      - 127.0.3.150
+      - 127.0.3.151
+      - 127.0.3.152
+      - 127.0.3.153
+      - 127.0.3.154
+      - 127.0.3.155
+      - 127.0.3.156
+      - 127.0.3.157
+      - 127.0.3.158
+    port:
+      - 2026
+      - 2036
+      - 2046
+      - 2056
+      - 2066
+      - 2076
+      - 2086
+      - 2096
+      - 2126
+      - 2136
+      - 2146
+      - 2156
+      - 2166
+      - 2176
+      - 2186
+      - 2196
+      - 2226
+      - 2236
+      - 2246
+      - 2256
+      - 2266
+      - 2276
+      - 2286
+      - 2296
+    traffic_manager_port:
+      - 8202
+      - 8302
+      - 8402
+      - 8502
+      - 8602
+      - 8702
+      - 8802
+      - 8902
+      - 8212
+      - 8312
+      - 8412
+      - 8512
+      - 8612
+      - 8712
+      - 8812
+      - 8912
+      - 8222
+      - 8322
+      - 8422
+      - 8522
+      - 8622
+      - 8722
+      - 8822
+      - 8922
+    traffic_manager_seed:
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+    gpu_id:
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+    frequency_hz: 10
+    timeout: 60
+    connection_timeout: 30
+    server_wait_timeout: 300
+    retry_interval: 2
+    max_retries: 5
+    quality_level: Low
+    render_offscreen: true
+    no_sound: true
+    null_rhi: true
+    no_steam: false
+    opengl: false
+    vulkan: false
+    extra_args: "-RPCThreads=2 -StreamingThreads=2 -SecondaryThreads=2 -nothreading"
+
+  routes:
+    route_files:
+      - resources/routes/train_routes_demo.xml
+    sample_mode: adaptive
+    adaptive:
+      window_size: 10
+      success_threshold: 100.0
+      low_success_rate: 0.5
+      high_success_rate: 0.8
+      low_success_weight: 1.0
+      high_success_weight: 1.0
+      warmup_min_samples: 8
+      log_interval_updates: 100
+      hard_scenarios:
+        - Accident
+        - AccidentTwoWays
+        - BlockedIntersection
+        - ConstructionObstacleTwoWays
+        - CrossingBicycleFlow
+        - EnterActorFlow
+        - HazardAtSideLaneTwoWays
+        - NonSignalizedJunctionLeftTurnEnterFlow
+        - OppositeVehicleTakingPriority
+        - ParkedObstacleTwoWays
+        - YieldToEmergencyVehicle
+        - VehicleTurningRoutePedestrian
+      hard_scenario_max_gap_samples: 500
+    route_max_length_m: 150.0
+  termination:
+    type: ppo
+  reward:
+    type: ppo
+  action_space:
+    type: discrete
+    action_repeat: 1
+    discrete_action_num: 16
+    discrete_actions_list:
+      - [0.0, 0.0, 1.0]
+      - [0.7, -0.3, 0.0]
+      - [0.7, -0.1, 0.0]
+      - [0.7, 0.0, 0.0]
+      - [0.7, 0.1, 0.0]
+      - [0.7, 0.3, 0.0]
+      - [0.3, -0.7, 0.0]
+      - [0.3, -0.3, 0.0]
+      - [0.3, 0.0, 0.0]
+      - [0.3, 0.3, 0.0]
+      - [0.3, 0.7, 0.0]
+      - [0.0, -1.0, 0.0]
+      - [0.0, -0.3, 0.0]
+      - [0.0, 0.0, 0.0]
+      - [0.0, 0.3, 0.0]
+      - [0.0, 1.0, 0.0]
+
+  observation_space:
+    vector:
+      enable: true
+      type: bev_mask
+      map_dir: resources/maps
+      mask_width: 64
+      pixels_per_meter: 2
+      ego_to_bottom: 32
+      lane_style: unified
+      elements:
+        navigation:
+          use_history: false
+        ego_vehicle:
+          use_history: false
+        vehicles:
+          use_history: true
+        emergency_vehicles:
+          use_history: true
+        pedestrians:
+          use_history: true
+        red_light:
+          use_history: false
+        green_light:
+          use_history: false
+        yellow_light:
+          use_history: false
+        obstacles:
+          use_history: false
+        lanes:
+          use_history: false
+        stop_signs:
+          use_history: false
+      history_index: [-16, -11, -6, -1]
+    scalars:
+      items:
+        - type: speed
+          use_history: true
+        - type: throttle
+          use_history: true
+        - type: brake
+          use_history: true
+      history_index: [-16, -11, -6, -1]

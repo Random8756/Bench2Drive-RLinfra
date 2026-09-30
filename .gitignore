@@ -1,0 +1,47 @@
+# Runtime
+logs/
+leaderboard_eval_logs/
+carla_logs/
+output/
+results/
+*.log
+
+# Local
+.DS_Store
+.env
+.venv
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Build / python
+build/
+dist/
+docs-dev/
+site/
+__pycache__/
+.cache/
+.ipynb_checkpoints
+.eggs/
+*.egg-info/
+*.egg
+*.py[cod]
+*.so
+
+# Artifacts / temp
+*.ckpt
+*.hdf5
+*.npy
+*.pkl
+*.pth
+*.pt
+*.tar.gz
+*.zip
+*.bak
+*.orig
+*.tmp
+*.swp
+*.swo
+.*.sw?
+*~

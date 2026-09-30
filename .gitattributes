@@ -1,0 +1,49 @@
+# Normalize line endings
+* text=auto eol=lf
+
+# Python files use LF
+*.py text eol=lf
+
+# Shell scripts use LF
+*.sh text eol=lf
+
+# Configuration files use LF
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+
+# HTML/CSS/JS files use LF
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+
+# Windows-specific files use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.h5 binary
+*.hdf5 binary
+*.ckpt binary
+*.so binary
+*.pkl binary
+*.npy binary
+*.npz binary
+*.pth binary
+*.pt binary
+*.onnx binary
+*.mp4 binary
+*.avi binary
